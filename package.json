@@ -1,0 +1,52 @@
+{
+  "name": "cyber-token-bridges",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "PengDeng <peng.deng@cyberconnect.me>",
+  "license": "GPL-3.0-or-later",
+  "scripts": {
+    "lint:gh-check": "prettier --check **.{sol,js,md,html}",
+    "lint:check": "prettier --check **.{sol,js,md,html} && solhint --config ./config/.solhint.json --ignore-path ./config/.solhintignore -f table 'src/**/*.sol'",
+    "lint:fix": "prettier --write **.{sol,js,md}",
+    "prepare": "husky install",
+    "build": "forge build --force",
+    "deploy_adapter:sepolia": "source .env.sepolia && forge script script/Scripts.s.sol:DeployAdapter --verify --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast --slow --etherscan-api-key $API_KEY -vvv",
+    "deploy_controller:bnbt": "source .env.bnbt && forge script script/Scripts.s.sol:DeployController --verify --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast --slow --etherscan-api-key $API_KEY -vvv",
+    "config_adapter:sepolia": "source .env.sepolia.owner && forge script script/Scripts.s.sol:ConfigOApp --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast --slow -vvv",
+    "config_adapter:bnbt": "source .env.bnbt.owner && forge script script/Scripts.s.sol:ConfigOApp --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast --slow -vvv",
+    "bridge_test:sepolia": "source .env.sepolia && forge script script/Scripts.s.sol:TestBridge --rpc-url $RPC_URL --private-key $PRIVATE_KEY --slow -vvv"
+
+  },
+  "dependencies": {
+    "@layerzerolabs/lz-evm-oapp-v2": "^2.3.5",
+    "@layerzerolabs/lz-evm-protocol-v2": "^2.3.3",
+    "@layerzerolabs/lz-evm-messagelib-v2": "^2.3.3",
+    "@layerzerolabs/toolbox-foundry": "^0.1.5",
+    "solidity-bytes-utils": "^0.8.2",
+    "@openzeppelin/contracts": "^5.0.1"
+  },
+  "devDependencies": {
+    "husky": "^8.0.1",
+    "lint-staged": "^13.0.1",
+    "prettier": "^2.7.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.19",
+    "solhint": "^3.3.7",
+    "solhint-plugin-prettier": "^0.0.5",
+    "solidity-coverage": "^0.7.21"
+  },
+  "lint-staged": {
+    "*.{sol,js,md,html}": "prettier --write"
+  },
+  "prettier": {
+    "overrides": [
+      {
+        "files": "*.sol",
+        "options": {
+          "tabWidth": 4,
+          "printWidth": 80,
+          "bracketSpacing": true
+        }
+      }
+    ]
+  }
+}

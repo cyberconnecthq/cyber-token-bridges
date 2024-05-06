@@ -1,6 +1,14 @@
 [profile.default]
 src = "src"
 out = "out"
-libs = ["lib"]
-
-# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+libs = [
+    'node_modules/@layerzerolabs/toolbox-foundry/lib',
+    'node_modules',
+]
+remappings = [
+    'ds-test/=node_modules/@layerzerolabs/toolbox-foundry/lib/ds-test',
+    'forge-std/=node_modules/@layerzerolabs/toolbox-foundry/lib/forge-std',
+    '@layerzerolabs/=node_modules/@layerzerolabs/',
+    '@openzeppelin/=node_modules/@openzeppelin/',
+]
+fs_permissions = [{ access = "read-write", path = "./"}]

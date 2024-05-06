@@ -7,8 +7,27 @@ out/
 /broadcast/*/31337/
 /broadcast/**/dry-run/
 
-# Docs
-docs/
+node_modules
+.env*
+coverage
+coverage.json
+typechain
+typechain-types
 
-# Dotenv file
-.env
+# Hardhat files
+cache
+artifacts
+
+# LayerZero specific files
+.layerzero
+
+# foundry test compilation files
+out
+broadcast
+
+# pnpm
+pnpm-error.log
+
+# Editor and OS files
+.DS_Store
+.idea
