@@ -12,10 +12,13 @@
     "build": "forge build --force",
     "deploy_adapter:sepolia": "source .env.sepolia && forge script script/Scripts.s.sol:DeployAdapter --verify --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast --slow --etherscan-api-key $API_KEY -vvv",
     "deploy_controller:bnbt": "source .env.bnbt && forge script script/Scripts.s.sol:DeployController --verify --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast --slow --etherscan-api-key $API_KEY -vvv",
-    "config_adapter:sepolia": "source .env.sepolia.owner && forge script script/Scripts.s.sol:ConfigOApp --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast --slow -vvv",
-    "config_adapter:bnbt": "source .env.bnbt.owner && forge script script/Scripts.s.sol:ConfigOApp --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast --slow -vvv",
-    "bridge_test:sepolia": "source .env.sepolia && forge script script/Scripts.s.sol:TestBridge --rpc-url $RPC_URL --private-key $PRIVATE_KEY --slow -vvv"
-
+    "deploy_controller:cyber_testnet": "source .env.cyber_testnet && forge script script/Scripts.s.sol:DeployController --verify --verifier blockscout --verifier-url https://testnet.cyberscan.co/api --chain-id 111557560 --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast --slow --etherscan-api-key $API_KEY -vvv",
+    "config_oapp:sepolia": "source .env.sepolia.owner && forge script script/Scripts.s.sol:ConfigOApp --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast --slow -vvv",
+    "config_oapp:bnbt": "source .env.bnbt.owner && forge script script/Scripts.s.sol:ConfigOApp --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast --slow -vvv",
+    "bridge_test:sepolia": "source .env.sepolia && forge script script/Scripts.s.sol:TestBridge --rpc-url $RPC_URL --private-key $PRIVATE_KEY --slow -vvv  --broadcast",
+    "bridge_test:bnbt": "source .env.bnbt && forge script script/Scripts.s.sol:TestBridge --rpc-url $RPC_URL --private-key $PRIVATE_KEY --slow -vvv  --broadcast",
+    "transfer_token_owner:bnbt": "source .env.bnbt.owner && forge script script/Scripts.s.sol:TransferTokenOwner --rpc-url $RPC_URL --private-key $PRIVATE_KEY --slow -vvv --broadcast",
+    "transfer_token_owner:cyber_testnet": "source .env.cyber_testnet.owner && forge script script/Scripts.s.sol:TransferTokenOwner --rpc-url $RPC_URL --private-key $PRIVATE_KEY --slow -vvv --broadcast"
   },
   "dependencies": {
     "@layerzerolabs/lz-evm-oapp-v2": "^2.3.5",

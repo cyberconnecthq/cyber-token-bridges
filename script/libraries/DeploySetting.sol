@@ -6,45 +6,65 @@ contract DeploySetting {
     struct DeployParameters {
         address deployerContract;
         address protocolOwner;
+        address cyberToken;
+        address lzEndpoint;
+        uint32 eid;
+        address lzController;
     }
 
-    DeployParameters internal deployParams;
+    mapping(uint256 => DeployParameters) internal deployParams;
 
     uint256 internal constant ETH = 1;
-    uint256 internal constant POLYGON = 137;
     uint256 internal constant OPTIMISM = 10;
-    uint256 internal constant ARBITRUM = 42161;
     uint256 internal constant BNB = 56;
-    uint256 internal constant BASE = 8453;
-    uint256 internal constant LINEA = 59144;
-    uint256 internal constant NOVA = 42170;
-    uint256 internal constant OPBNB = 204;
-    uint256 internal constant SCROLL = 534352;
-    uint256 internal constant MANTLE = 5000;
-    uint256 internal constant BLAST = 81457;
     uint256 internal constant CYBER = 7560;
 
     uint256 internal constant SEPOLIA = 11155111;
-    uint256 internal constant GOERLI = 5;
-    uint256 internal constant MUMBAI = 80001;
-    uint256 internal constant OP_GOERLI = 420;
     uint256 internal constant OP_SEPOLIA = 11155420;
-    uint256 internal constant BASE_GOERLI = 84531;
-    uint256 internal constant BASE_SEPOLIA = 84532;
-    uint256 internal constant LINEA_GOERLI = 59140;
-    uint256 internal constant SCROLL_SEPOLIA = 534351;
-    uint256 internal constant ARBITRUM_GOERLI = 421613;
     uint256 internal constant BNBT = 97;
-    uint256 internal constant OPBNB_TESTNET = 5611;
-    uint256 internal constant MANTLE_TESTENT = 5001;
-    uint256 internal constant BLAST_SEPOLIA = 168587773;
     uint256 internal constant CYBER_TESTNET = 111557560;
-    uint256 internal constant AMOY = 80002;
-    uint256 internal constant IMX_TESTNET = 13473;
 
     function _setDeployParams() internal {
-        deployParams
-            .deployerContract = 0x8eD1282a1aCE084De1E99E9Ce5ed68896C49d65f;
-        deployParams.protocolOwner = 0x7884f7F04F994da14302a16Cf15E597e31eebECf;
+        {
+            deployParams[SEPOLIA]
+                .deployerContract = 0x8eD1282a1aCE084De1E99E9Ce5ed68896C49d65f;
+            deployParams[SEPOLIA]
+                .protocolOwner = 0x7884f7F04F994da14302a16Cf15E597e31eebECf;
+            deployParams[SEPOLIA]
+                .cyberToken = 0xF616904ac19f5bE8206A923E92bFf8953a16c7Fc;
+            deployParams[SEPOLIA]
+                .lzEndpoint = 0x6EDCE65403992e310A62460808c4b910D972f10f;
+            deployParams[SEPOLIA]
+                .lzController = 0x12E4147A0C8d8d00eb3Eeb30Df3a089aB0420000;
+            deployParams[SEPOLIA].eid = 40161;
+        }
+
+        {
+            deployParams[BNBT]
+                .deployerContract = 0x8eD1282a1aCE084De1E99E9Ce5ed68896C49d65f;
+            deployParams[BNBT]
+                .protocolOwner = 0x7884f7F04F994da14302a16Cf15E597e31eebECf;
+            deployParams[BNBT]
+                .cyberToken = 0xdb359A83ff0B91551161f12e9C5454CC04FA2fCc;
+            deployParams[BNBT]
+                .lzEndpoint = 0x6EDCE65403992e310A62460808c4b910D972f10f;
+            deployParams[BNBT]
+                .lzController = 0xD610b93C19e87b7C3039bc8DA906a233aD85386b;
+            deployParams[BNBT].eid = 40102;
+        }
+
+        {
+            deployParams[CYBER_TESTNET]
+                .deployerContract = 0x8eD1282a1aCE084De1E99E9Ce5ed68896C49d65f;
+            deployParams[CYBER_TESTNET]
+                .protocolOwner = 0x7884f7F04F994da14302a16Cf15E597e31eebECf;
+            deployParams[CYBER_TESTNET]
+                .cyberToken = 0x3F0Cabe797a717A2ca97072942D66065BCF56dDC;
+            deployParams[CYBER_TESTNET]
+                .lzEndpoint = 0x6EDCE65403992e310A62460808c4b910D972f10f;
+            deployParams[CYBER_TESTNET]
+                .lzController = 0xfd522AE1Cec35a85237D1CddbfFeBe65E49eFb98;
+            deployParams[CYBER_TESTNET].eid = 40280;
+        }
     }
 }
