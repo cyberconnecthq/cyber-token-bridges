@@ -91,7 +91,7 @@ contract ConfigOApp is Script, DeploySetting {
                 block.chainid
             ];
             DeployParameters memory toChainParams = deployParams[
-                DeploySetting.CYBER_TESTNET
+                DeploySetting.SEPOLIA
             ];
             OFTCore(fromChainParams.lzController).setPeer(
                 toChainParams.eid,
@@ -99,7 +99,7 @@ contract ConfigOApp is Script, DeploySetting {
             );
             bytes memory receiveOption = OptionsBuilder
                 .newOptions()
-                .addExecutorLzReceiveOption(60000, 0);
+                .addExecutorLzReceiveOption(70000, 0);
             EnforcedOptionParam[]
                 memory enforcedOptions = new EnforcedOptionParam[](1);
             enforcedOptions[0] = EnforcedOptionParam(
@@ -123,12 +123,15 @@ contract TestBridge is Script, DeploySetting {
         _setDeployParams();
         vm.startBroadcast();
 
-        if (block.chainid == DeploySetting.SEPOLIA) {
+        if (
+            block.chainid == DeploySetting.SEPOLIA ||
+            block.chainid == DeploySetting.CYBER_TESTNET
+        ) {
             DeployParameters memory fromChainParams = deployParams[
                 block.chainid
             ];
             DeployParameters memory toChainParams = deployParams[
-                DeploySetting.CYBER_TESTNET
+                DeploySetting.SEPOLIA
             ];
 
             uint256 amountToBridge = 1 ether + 1 wei;

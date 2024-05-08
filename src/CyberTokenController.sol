@@ -33,7 +33,7 @@ contract CyberTokenController is OFTCore {
      * @dev Retrieves the address of the underlying ERC20 implementation.
      * @return The address of the adapted ERC-20 token.
      *
-     * @dev In the case of OFTAdapter, address(this) and erc20 are NOT the same contract.
+     * @dev In the case of CyberTokenController, address(this) and erc20 are NOT the same contract.
      */
     function token() public view returns (address) {
         return innerToken;
@@ -43,8 +43,8 @@ contract CyberTokenController is OFTCore {
      * @notice Indicates whether the OFT contract requires approval of the 'token()' to send.
      * @return requiresApproval Needs approval of the underlying token implementation.
      *
-     * @dev In the case of default OFTAdapter, approval is required.
-     * @dev In non-default OFTAdapter contracts with something like mint and burn privileges, it would NOT need approval.
+     * @dev In the case of default CyberTokenController, approval is required.
+     * @dev In non-default CyberTokenController contracts with something like mint and burn privileges, it would NOT need approval.
      */
     function approvalRequired() external pure virtual returns (bool) {
         return true;
@@ -60,7 +60,7 @@ contract CyberTokenController is OFTCore {
      * @return amountReceivedLD The amount received in local decimals on the remote.
      *
      * @dev msg.sender will need to approve this _amountLD of tokens to be locked inside of the contract.
-     * @dev WARNING: The default OFTAdapter implementation assumes LOSSLESS transfers, ie. 1 token in, 1 token out.
+     * @dev WARNING: The default CyberTokenController implementation assumes LOSSLESS transfers, ie. 1 token in, 1 token out.
      * IF the 'innerToken' applies something like a transfer fee, the default will NOT work...
      * a pre/post balance check will need to be done to calculate the amountReceivedLD.
      */
@@ -91,7 +91,7 @@ contract CyberTokenController is OFTCore {
      * @dev _srcEid The source chain ID.
      * @return amountReceivedLD The amount of tokens ACTUALLY received in local decimals.
      *
-     * @dev WARNING: The default OFTAdapter implementation assumes LOSSLESS transfers, ie. 1 token in, 1 token out.
+     * @dev WARNING: The default CyberTokenController implementation assumes LOSSLESS transfers, ie. 1 token in, 1 token out.
      * IF the 'innerToken' applies something like a transfer fee, the default will NOT work...
      * a pre/post balance check will need to be done to calculate the amountReceivedLD.
      */
@@ -102,11 +102,15 @@ contract CyberTokenController is OFTCore {
     ) internal virtual override returns (uint256 amountReceivedLD) {
         // @dev Mint the tokens to the recipient.
         IMintableBurnable(innerToken).mint(_to, _amountLD);
-        // @dev In the case of NON-default OFTAdapter, the amountLD MIGHT not be == amountReceivedLD.
+        // @dev In the case of NON-default CyberTokenController, the amountLD MIGHT not be == amountReceivedLD.
         return _amountLD;
     }
 
     function sharedDecimals() public pure override returns (uint8) {
         return 18;
+    }
+
+    function transferTokenOwnership(address newOwner) external onlyOwner {
+        Ownable(innerToken).transferOwnership(newOwner);
     }
 }
