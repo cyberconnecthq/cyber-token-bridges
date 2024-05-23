@@ -60,7 +60,7 @@ contract CyberStakingPoolTest is Test {
         assertEq(cyberToken.balanceOf(alice), initialAmount - amount);
         LockAmount memory lockAmount = cyberStakingPool.getLockAmount(alice);
         assertEq(lockAmount.amount, amount);
-        assertEq(cyberStakingPool.balanceOf(address(cyberStakingPool)), amount);
+        assertEq(cyberStakingPool.balanceOf(address(cyberStakingPool)), 0);
 
         vm.expectRevert("LOCKED_PERIOD_NOT_ENDED");
         cyberStakingPool.withdraw(amount, alice, alice);
@@ -74,10 +74,7 @@ contract CyberStakingPoolTest is Test {
         cyberStakingPool.withdraw(amount + 1, alice, alice);
 
         cyberStakingPool.withdraw(amount / 2, alice, alice);
-        assertEq(
-            cyberStakingPool.balanceOf(address(cyberStakingPool)),
-            amount / 2
-        );
+        assertEq(cyberStakingPool.balanceOf(address(cyberStakingPool)), 0);
         assertEq(cyberToken.balanceOf(alice), initialAmount - amount / 2);
         assertEq(cyberStakingPool.balanceOf(alice), 0);
         lockAmount = cyberStakingPool.getLockAmount(alice);

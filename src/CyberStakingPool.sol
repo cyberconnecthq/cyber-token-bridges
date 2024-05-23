@@ -7,7 +7,7 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ERC20Votes } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { ERC4626 } from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
+import { ERC4626, Math } from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 import { EIP712 } from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 
@@ -117,7 +117,6 @@ contract CyberStakingPool is
             _spendAllowance(_owner, caller, shares);
         }
 
-        _burn(address(this), shares);
         IERC20(asset()).safeTransfer(receiver, assets);
         emit Withdraw(caller, receiver, _owner, assets, shares);
     }
@@ -137,6 +136,20 @@ contract CyberStakingPool is
         return IERC20Metadata(asset()).decimals();
     }
 
+    function _convertToShares(
+        uint256 assets,
+        Math.Rounding /*rounding*/
+    ) internal pure override returns (uint256) {
+        return assets;
+    }
+
+    function _convertToAssets(
+        uint256 shares,
+        Math.Rounding /*rounding*/
+    ) internal pure override returns (uint256) {
+        return shares;
+    }
+
     /*//////////////////////////////////////////////////////////////
                             EXTERNAL 
     //////////////////////////////////////////////////////////////*/
@@ -144,7 +157,7 @@ contract CyberStakingPool is
     function initiateWithdraw(uint256 assets) external {
         require(assets != 0, "ZERO_AMOUNT");
 
-        _transfer(msg.sender, address(this), assets);
+        _burn(msg.sender, assets);
 
         LockAmount memory lockAmount = _lockAmounts[msg.sender];
         lockAmount.amount += assets;
