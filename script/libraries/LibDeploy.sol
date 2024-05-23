@@ -8,7 +8,7 @@ import { LibString } from "../../src/libraries/LibString.sol";
 
 library LibDeploy {
     // create2 deploy all contract with this protocol salt
-    bytes32 constant SALT = keccak256(bytes("CyberConnetc"));
+    bytes32 constant SALT = keccak256(bytes("Cyber"));
 
     string internal constant OUTPUT_FILE = "docs/deploy/";
 

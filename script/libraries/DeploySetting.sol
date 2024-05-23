@@ -10,6 +10,9 @@ contract DeploySetting {
         address lzEndpoint;
         uint32 eid;
         address lzController;
+        address cyberStakingPool;
+        address stakedCyberToken;
+        address withdrawer;
     }
 
     mapping(uint256 => DeployParameters) internal deployParams;
@@ -51,6 +54,8 @@ contract DeploySetting {
             deployParams[BNBT]
                 .lzController = 0xD610b93C19e87b7C3039bc8DA906a233aD85386b;
             deployParams[BNBT].eid = 40102;
+            deployParams[BNBT]
+                .withdrawer = 0xefb3F5f64Bd860a1bFde7897918d8e668dCab7B1;
         }
 
         {
@@ -65,6 +70,10 @@ contract DeploySetting {
             deployParams[CYBER_TESTNET]
                 .lzController = 0xfd522AE1Cec35a85237D1CddbfFeBe65E49eFb98;
             deployParams[CYBER_TESTNET].eid = 40280;
+            deployParams[CYBER_TESTNET]
+                .stakedCyberToken = 0x05EbaAe2fBB8f53e3E751b8F66781055517722EC;
+            deployParams[CYBER_TESTNET]
+                .cyberStakingPool = 0x14068fb2E6cAb55eF743b09EEE725a62e37466b4;
         }
     }
 }
