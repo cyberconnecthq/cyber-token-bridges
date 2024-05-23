@@ -7,7 +7,6 @@ import { DeploySetting } from "./libraries/DeploySetting.sol";
 import { LibDeploy, Create2Deployer } from "./libraries/LibDeploy.sol";
 import { CyberTokenAdapter } from "../src/CyberTokenAdapter.sol";
 import { CyberTokenController } from "../src/CyberTokenController.sol";
-import { StakedCyberToken } from "../src/StakedCyberToken.sol";
 import { CyberStakingPool } from "../src/CyberStakingPool.sol";
 import { LaunchTokenWithdrawer } from "../src/LaunchTokenWithdrawer.sol";
 
@@ -191,33 +190,6 @@ contract TransferTokenOwner is Script, DeploySetting {
     }
 }
 
-contract DeployStakedCyber is Script, DeploySetting {
-    function run() external {
-        _setDeployParams();
-        vm.startBroadcast();
-
-        if (block.chainid == DeploySetting.CYBER_TESTNET) {
-            address token = Create2Deployer(
-                deployParams[block.chainid].deployerContract
-            ).deploy(
-                    abi.encodePacked(
-                        type(StakedCyberToken).creationCode,
-                        abi.encode(
-                            deployParams[block.chainid].lzEndpoint, // layerzero endpoint
-                            deployParams[block.chainid].protocolOwner // owner
-                        )
-                    ),
-                    LibDeploy.SALT
-                );
-            LibDeploy._write(vm, "StakedCyberToken", token);
-        } else {
-            revert("NOT_SUPPORTED_CHAIN_ID");
-        }
-
-        vm.stopBroadcast();
-    }
-}
-
 contract DeployWithdrawer is Script, DeploySetting {
     function run() external {
         _setDeployParams();
@@ -323,8 +295,7 @@ contract DeployCyberStakingPool is Script, DeploySetting {
                         abi.encode(
                             deployParams[block.chainid].protocolOwner, // owner
                             deployParams[block.chainid].lzEndpoint, // layerzero endpoint
-                            deployParams[block.chainid].cyberToken, // cyber token
-                            deployParams[block.chainid].stakedCyberToken // staked cyber token
+                            deployParams[block.chainid].cyberToken // cyber token
                         )
                     ),
                     LibDeploy.SALT
@@ -345,23 +316,9 @@ contract ConfigCyberStakingPool is Script, DeploySetting {
 
         if (block.chainid == DeploySetting.CYBER_TESTNET) {
             CyberStakingPool(deployParams[block.chainid].cyberStakingPool)
-                .setOApp(deployParams[block.chainid].lzController, true);
-        } else {
-            revert("NOT_SUPPORTED_CHAIN_ID");
-        }
-
-        vm.stopBroadcast();
-    }
-}
-
-contract ConfigStakedCyber is Script, DeploySetting {
-    function run() external {
-        _setDeployParams();
-        vm.startBroadcast();
-
-        if (block.chainid == DeploySetting.CYBER_TESTNET) {
-            StakedCyberToken(deployParams[block.chainid].stakedCyberToken)
-                .setMinter(deployParams[block.chainid].cyberStakingPool, true);
+                .setOApp(deployParams[block.chainid].lzController);
+            CyberStakingPool(deployParams[block.chainid].cyberStakingPool)
+                .setLockDuration(5 minutes);
         } else {
             revert("NOT_SUPPORTED_CHAIN_ID");
         }
