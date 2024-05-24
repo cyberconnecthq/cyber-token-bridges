@@ -126,7 +126,7 @@ contract CyberStakingPool is
         address to,
         uint256 value
     ) internal virtual override(ERC20, ERC20Votes) {
-        if (from != address(0) && to != address(0) && to != address(this)) {
+        if (from != address(0) && to != address(0)) {
             require(!paused(), "TRANSFER_PAUSED");
         }
         ERC20Votes._update(from, to, value);
@@ -134,20 +134,6 @@ contract CyberStakingPool is
 
     function decimals() public view override(ERC4626, ERC20) returns (uint8) {
         return IERC20Metadata(asset()).decimals();
-    }
-
-    function _convertToShares(
-        uint256 assets,
-        Math.Rounding /*rounding*/
-    ) internal pure override returns (uint256) {
-        return assets;
-    }
-
-    function _convertToAssets(
-        uint256 shares,
-        Math.Rounding /*rounding*/
-    ) internal pure override returns (uint256) {
-        return shares;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -184,14 +170,15 @@ contract CyberStakingPool is
 
         // Extract the composed message from the delivered message using the MsgCodec
         bytes memory composeMsgContent = OFTComposeMsgCodec.composeMsg(message);
-        (address account, uint256 amount) = abi.decode(
+        (address account, uint256 assets) = abi.decode(
             composeMsgContent,
             (address, uint256)
         );
 
-        _mint(account, amount);
-        emit Deposit(account, account, amount, amount);
-        emit LzCompose(oApp, account, amount);
+        uint256 shares = previewDeposit(assets);
+        _mint(account, shares);
+        emit Deposit(address(this), account, assets, shares);
+        emit LzCompose(oApp, account, assets);
     }
 
     function getLockAmount(
