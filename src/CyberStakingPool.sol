@@ -83,7 +83,7 @@ contract CyberStakingPool is
         address _owner
     ) public override returns (uint256) {
         uint256 shares = previewWithdraw(assets);
-        _withdraw(_msgSender(), receiver, _owner, assets, shares);
+        _withdraw(msg.sender, receiver, _owner, assets, shares);
         return shares;
     }
 
@@ -94,7 +94,7 @@ contract CyberStakingPool is
         address _owner
     ) public override returns (uint256) {
         uint256 assets = previewRedeem(shares);
-        _withdraw(_msgSender(), receiver, _owner, assets, shares);
+        _withdraw(msg.sender, receiver, _owner, assets, shares);
         return assets;
     }
 
@@ -110,13 +110,13 @@ contract CyberStakingPool is
             _lockAmounts[_owner].lockEnd <= block.timestamp,
             "LOCKED_PERIOD_NOT_ENDED"
         );
-        require(_lockAmounts[_owner].amount >= assets, "INSUFFICIENT_BALANCE");
-        _lockAmounts[_owner].amount -= assets;
+        require(_lockAmounts[_owner].amount >= shares, "INSUFFICIENT_BALANCE");
+        _lockAmounts[_owner].amount -= shares;
 
         if (caller != _owner) {
             _spendAllowance(_owner, caller, shares);
         }
-
+        _burn(address(this), shares);
         IERC20(asset()).safeTransfer(receiver, assets);
         emit Withdraw(caller, receiver, _owner, assets, shares);
     }
@@ -126,7 +126,7 @@ contract CyberStakingPool is
         address to,
         uint256 value
     ) internal virtual override(ERC20, ERC20Votes) {
-        if (from != address(0) && to != address(0)) {
+        if (from != address(0) && to != address(0) && to != address(this)) {
             require(!paused(), "TRANSFER_PAUSED");
         }
         ERC20Votes._update(from, to, value);
@@ -140,22 +140,17 @@ contract CyberStakingPool is
                             EXTERNAL 
     //////////////////////////////////////////////////////////////*/
 
+    function initiateRedeem(uint256 shares) external {
+        uint256 maxShares = maxRedeem(msg.sender);
+        require(shares <= maxShares, "EXCEED_MAX_REDEEM");
+        _initiateWithdraw(shares);
+    }
+
     function initiateWithdraw(uint256 assets) external {
-        require(assets != 0, "ZERO_AMOUNT");
-
-        _burn(msg.sender, assets);
-
-        LockAmount memory lockAmount = _lockAmounts[msg.sender];
-        lockAmount.amount += assets;
-        lockAmount.lockEnd = block.timestamp + lockDuration;
-        _lockAmounts[msg.sender] = lockAmount;
-
-        emit InitiateWithdraw(
-            msg.sender,
-            assets,
-            lockAmount.amount,
-            lockAmount.lockEnd
-        );
+        uint256 maxAssets = maxWithdraw(msg.sender);
+        require(assets <= maxAssets, "EXCEED_MAX_WITHDRAW");
+        uint256 shares = previewWithdraw(assets);
+        _initiateWithdraw(shares);
     }
 
     function lzCompose(
@@ -196,5 +191,26 @@ contract CyberStakingPool is
 
     function setOApp(address _oApp) external onlyOwner {
         oApp = _oApp;
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                            PRIVATE
+    //////////////////////////////////////////////////////////////*/
+    function _initiateWithdraw(uint256 shares) private {
+        require(shares != 0, "ZERO_AMOUNT");
+
+        _transfer(msg.sender, address(this), shares);
+
+        LockAmount memory lockAmount = _lockAmounts[msg.sender];
+        lockAmount.amount += shares;
+        lockAmount.lockEnd = block.timestamp + lockDuration;
+        _lockAmounts[msg.sender] = lockAmount;
+
+        emit InitiateWithdraw(
+            msg.sender,
+            shares,
+            lockAmount.amount,
+            lockAmount.lockEnd
+        );
     }
 }
