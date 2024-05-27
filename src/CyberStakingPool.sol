@@ -12,25 +12,34 @@ import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 
 import { DataTypes } from "./libraries/DataTypes.sol";
 
+import { ICyberStakingPool } from "./interfaces/ICyberStakingPool.sol";
+
 /**
  * @title CyberStakingPool
  * @author Cyber
  */
-contract CyberStakingPool is ERC20Burnable, ERC20Votes, Ownable, Pausable {
+contract CyberStakingPool is
+    ERC20Burnable,
+    ERC20Votes,
+    Ownable,
+    Pausable,
+    ICyberStakingPool
+{
     using SafeERC20 for IERC20;
     /*//////////////////////////////////////////////////////////////
                             EVENT
     //////////////////////////////////////////////////////////////*/
 
-    event Stake(address account, uint256 amount);
+    event Stake(uint256 logId, address account, uint256 amount);
     event Unstake(
+        uint256 logId,
         address account,
         uint256 amount,
         uint256 totalLocked,
         uint256 lockEnd
     );
-    event Withdraw(address account, uint256 amount);
-    event ClaimReward(address account, uint256 amount);
+    event Withdraw(uint256 logId, address account, uint256 amount);
+    event ClaimReward(uint256 logId, address account, uint256 amount);
 
     /*//////////////////////////////////////////////////////////////
                             STORAGE
@@ -49,12 +58,16 @@ contract CyberStakingPool is ERC20Burnable, ERC20Votes, Ownable, Pausable {
     uint256 public rewardPerTokenStored;
     // Duration of lock for staked CYBER
     uint256 public lockDuration;
+
     // User address => rewardPerTokenStored
     mapping(address => uint256) public userRewardPerTokenPaid;
     // User address => rewards to be claimed
     mapping(address => uint256) public rewards;
     // User address => lock amount for withdrawal
     mapping(address => DataTypes.LockAmount) internal _lockAmounts;
+
+    // Log ID for each event
+    uint256 private _logId;
 
     /*//////////////////////////////////////////////////////////////
                             CONSTRUCTOR & INITIALIZER
@@ -108,14 +121,16 @@ contract CyberStakingPool is ERC20Burnable, ERC20Votes, Ownable, Pausable {
                             EXTERNAL
     //////////////////////////////////////////////////////////////*/
 
-    function stake(uint256 _amount) external updateReward(msg.sender) {
+    function stake(uint256 _amount) external override updateReward(msg.sender) {
         require(_amount > 0, "ZERO_AMOUNT");
         cyber.safeTransferFrom(msg.sender, address(this), _amount);
         _mint(msg.sender, _amount);
-        emit Stake(msg.sender, _amount);
+        emit Stake(_logId++, msg.sender, _amount);
     }
 
-    function unstake(uint256 _amount) external updateReward(msg.sender) {
+    function unstake(
+        uint256 _amount
+    ) external override updateReward(msg.sender) {
         require(_amount > 0, "ZERO_AMOUNT");
         require(balanceOf(msg.sender) >= _amount, "INSUFFICIENT_BALANCE");
 
@@ -127,6 +142,7 @@ contract CyberStakingPool is ERC20Burnable, ERC20Votes, Ownable, Pausable {
         _lockAmounts[msg.sender] = lockAmount;
 
         emit Unstake(
+            _logId++,
             msg.sender,
             _amount,
             lockAmount.amount,
@@ -134,7 +150,9 @@ contract CyberStakingPool is ERC20Burnable, ERC20Votes, Ownable, Pausable {
         );
     }
 
-    function withdraw(uint256 _amount) external updateReward(msg.sender) {
+    function withdraw(
+        uint256 _amount
+    ) external override updateReward(msg.sender) {
         require(
             _lockAmounts[msg.sender].lockEnd != 0,
             "NOT_AVAILABLE_TO_WITHDRAW"
@@ -150,22 +168,28 @@ contract CyberStakingPool is ERC20Burnable, ERC20Votes, Ownable, Pausable {
         _lockAmounts[msg.sender].amount -= _amount;
 
         cyber.safeTransfer(msg.sender, _amount);
-        emit Withdraw(msg.sender, _amount);
+        emit Withdraw(_logId++, msg.sender, _amount);
     }
 
-    function claimReward() external updateReward(msg.sender) {
+    function claimReward() external override updateReward(msg.sender) {
         uint256 reward = rewards[msg.sender];
         require(reward > 0, "NO_REWARD_TO_CLAIM");
         rewards[msg.sender] = 0;
         cyber.safeTransfer(msg.sender, reward);
-        emit ClaimReward(msg.sender, reward);
+        emit ClaimReward(_logId++, msg.sender, reward);
+    }
+
+    function getLockAmount(
+        address account
+    ) external view returns (DataTypes.LockAmount memory) {
+        return _lockAmounts[account];
     }
 
     /*//////////////////////////////////////////////////////////////
                             PUBLIC
     //////////////////////////////////////////////////////////////*/
 
-    function earned(address _account) public view returns (uint256) {
+    function earned(address _account) public view override returns (uint256) {
         return
             ((balanceOf(_account) *
                 (rewardPerToken() - userRewardPerTokenPaid[_account])) / 1e18) +
@@ -185,12 +209,6 @@ contract CyberStakingPool is ERC20Burnable, ERC20Votes, Ownable, Pausable {
             rewardPerTokenStored +
             (rewardRate * (lastTimeRewardApplicable() - updatedAt) * 1e18) /
             totalSupply();
-    }
-
-    function getLockAmount(
-        address account
-    ) external view returns (DataTypes.LockAmount memory) {
-        return _lockAmounts[account];
     }
 
     /*//////////////////////////////////////////////////////////////

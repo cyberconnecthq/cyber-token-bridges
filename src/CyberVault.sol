@@ -16,6 +16,8 @@ import { OFTComposeMsgCodec } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/
 
 import { DataTypes } from "./libraries/DataTypes.sol";
 
+import { ICyberStakingPool } from "./interfaces/ICyberStakingPool.sol";
+
 /**
  * @title CyberVault
  * @author Cyber
@@ -39,6 +41,7 @@ contract CyberVault is ERC4626, ERC20Votes, Pausable, Ownable, IOAppComposer {
                             STORAGE
     //////////////////////////////////////////////////////////////*/
 
+    ICyberStakingPool public immutable cyberStakingPool;
     address public immutable lzEndpoint;
     uint256 public lockDuration;
     address public oApp;
@@ -51,7 +54,8 @@ contract CyberVault is ERC4626, ERC20Votes, Pausable, Ownable, IOAppComposer {
     constructor(
         address _owner,
         address _lzEndpoint,
-        IERC20 _cyber
+        IERC20 _cyber,
+        address _stakingPool
     )
         ERC4626(_cyber)
         ERC20("Compound CYBER", "cCYBER")
@@ -59,6 +63,7 @@ contract CyberVault is ERC4626, ERC20Votes, Pausable, Ownable, IOAppComposer {
         Ownable(_owner)
     {
         lzEndpoint = _lzEndpoint;
+        cyberStakingPool = ICyberStakingPool(_stakingPool);
         lockDuration = 7 days;
         _pause();
     }
@@ -66,6 +71,11 @@ contract CyberVault is ERC4626, ERC20Votes, Pausable, Ownable, IOAppComposer {
     /*//////////////////////////////////////////////////////////////
                             OVERRIDE 
     //////////////////////////////////////////////////////////////*/
+
+    /** @dev See {IERC4626-totalAssets}. */
+    function totalAssets() public view override returns (uint256) {
+        return cyberStakingPool.balanceOf(address(this));
+    }
 
     /** @dev See {IERC4626-withdraw}. */
     function withdraw(
@@ -117,9 +127,6 @@ contract CyberVault is ERC4626, ERC20Votes, Pausable, Ownable, IOAppComposer {
         address to,
         uint256 value
     ) internal virtual override(ERC20, ERC20Votes) {
-        if (from != address(0) && to != address(0) && to != address(this)) {
-            require(!paused(), "TRANSFER_PAUSED");
-        }
         ERC20Votes._update(from, to, value);
     }
 
@@ -144,6 +151,23 @@ contract CyberVault is ERC4626, ERC20Votes, Pausable, Ownable, IOAppComposer {
         _initiateWithdraw(shares);
     }
 
+    function getLockAmount(
+        address account
+    ) external view returns (DataTypes.LockAmount memory) {
+        return _lockAmounts[account];
+    }
+
+    function stake() external {
+        uint256 amount = IERC20(asset()).balanceOf(address(this));
+        require(amount != 0, "ZERO_AMOUNT");
+        IERC20(asset()).approve(address(cyberStakingPool), amount);
+        cyberStakingPool.stake(amount);
+    }
+
+    function claim() external {
+        cyberStakingPool.claimReward();
+    }
+
     function lzCompose(
         address _oApp,
         bytes32 /*_guid*/,
@@ -165,12 +189,6 @@ contract CyberVault is ERC4626, ERC20Votes, Pausable, Ownable, IOAppComposer {
         _mint(account, shares);
         emit Deposit(address(this), account, assets, shares);
         emit LzCompose(oApp, account, assets);
-    }
-
-    function getLockAmount(
-        address account
-    ) external view returns (DataTypes.LockAmount memory) {
-        return _lockAmounts[account];
     }
 
     /*//////////////////////////////////////////////////////////////

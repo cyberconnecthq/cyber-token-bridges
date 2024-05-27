@@ -22,7 +22,7 @@ contract CyberVaultTest is Test {
     function setUp() public {
         cyberToken = new MockCyberToken();
 
-        cyberVault = new CyberVault(owner, lzEndpoint, cyberToken);
+        cyberVault = new CyberVault(owner, lzEndpoint, cyberToken, address(0));
     }
 
     function testDeposit() public {
