@@ -8,7 +8,9 @@ interface ICyberStakingPool is IERC20 {
     function stake(uint256 _amount) external;
     function unstake(uint256 _amount) external;
     function withdraw(uint256 _amount) external;
-    function claimReward() external;
-    function earned(address _account) external view returns (uint256);
-    function rewardPerToken() external view returns (uint256);
+    function claimReward(uint16 _distributionId) external;
+    function rewardBalance(
+        uint16 _distributionId,
+        address _user
+    ) external view returns (uint256);
 }

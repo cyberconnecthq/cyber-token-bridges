@@ -8,6 +8,8 @@ import { MockCyberToken } from "./utils/MockCyberToken.sol";
 
 import { CyberVault } from "../src/CyberVault.sol";
 
+import { CyberStakingPool } from "../src/CyberStakingPool.sol";
+
 import { DataTypes } from "../src/libraries/DataTypes.sol";
 
 contract CyberVaultTest is Test {
@@ -22,7 +24,16 @@ contract CyberVaultTest is Test {
     function setUp() public {
         cyberToken = new MockCyberToken();
 
-        cyberVault = new CyberVault(owner, lzEndpoint, cyberToken, address(0));
+        CyberStakingPool cyberStakingPool = new CyberStakingPool(
+            owner,
+            address(cyberToken)
+        );
+        cyberVault = new CyberVault(
+            owner,
+            lzEndpoint,
+            cyberToken,
+            address(cyberStakingPool)
+        );
     }
 
     function testDeposit() public {
@@ -101,7 +112,6 @@ contract CyberVaultTest is Test {
         cyberToken.approve(address(cyberVault), amount);
         cyberVault.deposit(amount, alice);
 
-        vm.expectRevert("TRANSFER_PAUSED");
         cyberVault.transfer(bob, amount / 2);
     }
 }

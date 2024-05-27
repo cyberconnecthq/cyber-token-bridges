@@ -164,8 +164,8 @@ contract CyberVault is ERC4626, ERC20Votes, Pausable, Ownable, IOAppComposer {
         cyberStakingPool.stake(amount);
     }
 
-    function claim() external {
-        cyberStakingPool.claimReward();
+    function claim(uint16 distributionId) external {
+        cyberStakingPool.claimReward(distributionId);
     }
 
     function lzCompose(

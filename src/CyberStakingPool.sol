@@ -10,6 +10,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { EIP712 } from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 
+import { RewardDistribution } from "./RewardDistribution.sol";
 import { DataTypes } from "./libraries/DataTypes.sol";
 
 import { ICyberStakingPool } from "./interfaces/ICyberStakingPool.sol";
@@ -21,8 +22,8 @@ import { ICyberStakingPool } from "./interfaces/ICyberStakingPool.sol";
 contract CyberStakingPool is
     ERC20Burnable,
     ERC20Votes,
-    Ownable,
     Pausable,
+    RewardDistribution,
     ICyberStakingPool
 {
     using SafeERC20 for IERC20;
@@ -30,41 +31,43 @@ contract CyberStakingPool is
                             EVENT
     //////////////////////////////////////////////////////////////*/
 
-    event Stake(uint256 logId, address account, uint256 amount);
+    event Stake(uint256 logId, address user, uint256 amount);
     event Unstake(
         uint256 logId,
-        address account,
+        address user,
         uint256 amount,
         uint256 totalLocked,
         uint256 lockEnd
     );
-    event Withdraw(uint256 logId, address account, uint256 amount);
-    event ClaimReward(uint256 logId, address account, uint256 amount);
+    event Withdraw(uint256 logId, address user, uint256 amount);
+    event ClaimReward(uint256 logId, address user, uint256 amount);
+    event RewardsAccrued(address user, uint256 amount);
+    event CollectFee(
+        uint16 distributionId,
+        uint256 protocolFee,
+        uint256 userRewards
+    );
 
     /*//////////////////////////////////////////////////////////////
                             STORAGE
     //////////////////////////////////////////////////////////////*/
 
+    /// @dev MAX_BPS the maximum number of basis points.
+    /// 10000 basis points are equivalent to 100%.
+    uint256 public constant MAX_BPS = 1e4;
+
     IERC20 public immutable cyber;
-    // Duration of rewards to be paid out (in seconds)
-    uint256 public duration;
-    // Timestamp of when the rewards finish
-    uint256 public finishAt;
-    // Minimum of last updated time and reward finish time
-    uint256 public updatedAt;
-    // Reward to be paid out per second
-    uint256 public rewardRate;
-    // Sum of (reward rate * dt * 1e18 / total supply)
-    uint256 public rewardPerTokenStored;
+    uint256 public totalStaked;
     // Duration of lock for staked CYBER
     uint256 public lockDuration;
+    uint256 public protocolFeeBps;
+    uint256 public protocolAccruedFee;
+    uint256 public protocolClaimableFee;
 
-    // User address => rewardPerTokenStored
-    mapping(address => uint256) public userRewardPerTokenPaid;
-    // User address => rewards to be claimed
-    mapping(address => uint256) public rewards;
     // User address => lock amount for withdrawal
     mapping(address => DataTypes.LockAmount) internal _lockAmounts;
+    /// hash(distribution id, user) => rewardsBalance
+    mapping(bytes32 => uint256) private _rewardsBalances;
 
     // Log ID for each event
     uint256 private _logId;
@@ -90,20 +93,13 @@ contract CyberStakingPool is
                             MODIFIER
     //////////////////////////////////////////////////////////////*/
 
-    modifier updateReward(address _account) {
-        rewardPerTokenStored = rewardPerToken();
-        updatedAt = lastTimeRewardApplicable();
-
-        if (_account != address(0)) {
-            rewards[_account] = earned(_account);
-            userRewardPerTokenPaid[_account] = rewardPerTokenStored;
-        }
-
+    modifier updateReward(address _user) {
+        _updateCurrentUnclaimedRewards(_user, balanceOf(_user));
         _;
     }
 
     /*//////////////////////////////////////////////////////////////
-                            ERC20 OVERRIDES
+                        OVERRIDES
     //////////////////////////////////////////////////////////////*/
 
     function _update(
@@ -113,8 +109,34 @@ contract CyberStakingPool is
     ) internal virtual override(ERC20, ERC20Votes) {
         if (from != address(0) && to != address(0)) {
             require(!paused(), "TRANSFER_PAUSED");
+            // Sender
+            _updateCurrentUnclaimedRewards(from, balanceOf(from));
+
+            // Recipient
+            if (from != to) {
+                _updateCurrentUnclaimedRewards(to, balanceOf(to));
+            }
         }
         ERC20Votes._update(from, to, value);
+    }
+
+    function _collectFee(
+        uint16 distributionId,
+        uint256 rewards
+    ) internal override returns (uint256) {
+        // Calculate the protocol fee as a percentage of the rewards.
+        uint256 protocolFeeAmount = (rewards * protocolFeeBps) / MAX_BPS;
+
+        uint256 userRewards = rewards - protocolFeeAmount;
+
+        // Emit an event for the fee collection, providing transparency and traceability.
+        emit CollectFee(distributionId, protocolFeeAmount, userRewards);
+
+        protocolClaimableFee += protocolFeeAmount;
+        protocolAccruedFee += protocolFeeAmount;
+
+        // Return the remaining rewards after deducting the protocol fees.
+        return userRewards;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -123,7 +145,10 @@ contract CyberStakingPool is
 
     function stake(uint256 _amount) external override updateReward(msg.sender) {
         require(_amount > 0, "ZERO_AMOUNT");
+
         cyber.safeTransferFrom(msg.sender, address(this), _amount);
+
+        totalStaked += _amount;
         _mint(msg.sender, _amount);
         emit Stake(_logId++, msg.sender, _amount);
     }
@@ -134,6 +159,7 @@ contract CyberStakingPool is
         require(_amount > 0, "ZERO_AMOUNT");
         require(balanceOf(msg.sender) >= _amount, "INSUFFICIENT_BALANCE");
 
+        totalStaked -= _amount;
         _burn(msg.sender, _amount);
 
         DataTypes.LockAmount memory lockAmount = _lockAmounts[msg.sender];
@@ -171,44 +197,39 @@ contract CyberStakingPool is
         emit Withdraw(_logId++, msg.sender, _amount);
     }
 
-    function claimReward() external override updateReward(msg.sender) {
-        uint256 reward = rewards[msg.sender];
-        require(reward > 0, "NO_REWARD_TO_CLAIM");
-        rewards[msg.sender] = 0;
-        cyber.safeTransfer(msg.sender, reward);
-        emit ClaimReward(_logId++, msg.sender, reward);
+    function claimReward(
+        uint16 distributionId
+    ) external override updateReward(msg.sender) {
+        bytes32 key = rewardBalanceKey(distributionId, msg.sender);
+        uint256 unclaimedRewards = _rewardsBalances[key];
+        require(unclaimedRewards > 0, "NO_REWARD_TO_CLAIM");
+        _rewardsBalances[key] = 0;
+        cyber.safeTransfer(msg.sender, unclaimedRewards);
+        emit ClaimReward(_logId++, msg.sender, unclaimedRewards);
+    }
+
+    function rewardBalance(
+        uint16 distributionId,
+        address user
+    ) external view override returns (uint256) {
+        return _rewardsBalances[rewardBalanceKey(distributionId, user)];
     }
 
     function getLockAmount(
-        address account
+        address user
     ) external view returns (DataTypes.LockAmount memory) {
-        return _lockAmounts[account];
+        return _lockAmounts[user];
     }
 
     /*//////////////////////////////////////////////////////////////
                             PUBLIC
     //////////////////////////////////////////////////////////////*/
 
-    function earned(address _account) public view override returns (uint256) {
-        return
-            ((balanceOf(_account) *
-                (rewardPerToken() - userRewardPerTokenPaid[_account])) / 1e18) +
-            rewards[_account];
-    }
-
-    function lastTimeRewardApplicable() public view returns (uint256) {
-        return _min(finishAt, block.timestamp);
-    }
-
-    function rewardPerToken() public view returns (uint256) {
-        if (totalSupply() == 0) {
-            return rewardPerTokenStored;
-        }
-
-        return
-            rewardPerTokenStored +
-            (rewardRate * (lastTimeRewardApplicable() - updatedAt) * 1e18) /
-            totalSupply();
+    function rewardBalanceKey(
+        uint16 distributionId,
+        address user
+    ) public pure returns (bytes32) {
+        return keccak256(abi.encode(distributionId, user));
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -223,30 +244,19 @@ contract CyberStakingPool is
         _unpause();
     }
 
-    function setRewardsDuration(uint256 _duration) external onlyOwner {
-        require(finishAt < block.timestamp, "REWARDS_DURATION_NOT_FINISHED");
-        duration = _duration;
+    function setLockDuration(uint256 _lockDuration) external onlyOwner {
+        lockDuration = _lockDuration;
     }
 
-    function notifyRewardAmount(
-        uint256 _amount
-    ) external onlyOwner updateReward(address(0)) {
-        if (block.timestamp >= finishAt) {
-            rewardRate = _amount / duration;
-        } else {
-            uint256 remainingRewards = (finishAt - block.timestamp) *
-                rewardRate;
-            rewardRate = (_amount + remainingRewards) / duration;
-        }
+    function setProtocolFeeBps(uint256 _protocolFeeBps) external onlyOwner {
+        require(_protocolFeeBps <= MAX_BPS, "INVALID_PROTOCOL_FEE_BPS");
+        protocolFeeBps = _protocolFeeBps;
+    }
 
-        require(rewardRate > 0, "REWARD_RATE_ZERO");
-        require(
-            rewardRate * duration <= cyber.balanceOf(address(this)),
-            "INSUFFICIENT_REWARD_BALANCE"
-        );
-
-        finishAt = block.timestamp + duration;
-        updatedAt = block.timestamp;
+    function claimProtocolFee() external onlyOwner {
+        require(protocolClaimableFee > 0, "NO_CLAIMABLE_FEE");
+        cyber.safeTransfer(owner(), protocolClaimableFee);
+        protocolClaimableFee = 0;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -255,5 +265,28 @@ contract CyberStakingPool is
 
     function _min(uint256 x, uint256 y) private pure returns (uint256) {
         return x <= y ? x : y;
+    }
+
+    function _updateCurrentUnclaimedRewards(
+        address user,
+        uint256 stakedByUser
+    ) private {
+        for (
+            uint16 distributionId = 1;
+            distributionId <= totalDistributions;
+            ++distributionId
+        ) {
+            uint256 accruedRewards = _updateUser(
+                distributionId,
+                user,
+                stakedByUser,
+                totalStaked
+            );
+            if (accruedRewards != 0) {
+                bytes32 key = rewardBalanceKey(distributionId, user);
+                _rewardsBalances[key] += accruedRewards;
+                emit RewardsAccrued(user, accruedRewards);
+            }
+        }
     }
 }
