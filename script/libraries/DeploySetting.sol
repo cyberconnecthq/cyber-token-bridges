@@ -10,7 +10,7 @@ contract DeploySetting {
         address lzEndpoint;
         uint32 eid;
         address lzController;
-        address cyberStakingPool;
+        address cyberVault;
         address withdrawer;
     }
 
@@ -70,7 +70,7 @@ contract DeploySetting {
                 .lzController = 0xfd522AE1Cec35a85237D1CddbfFeBe65E49eFb98;
             deployParams[CYBER_TESTNET].eid = 40280;
             deployParams[CYBER_TESTNET]
-                .cyberStakingPool = 0xFE789B66AD470dd8DD961a6fB3F8aD941B2c79c1;
+                .cyberVault = 0xFE789B66AD470dd8DD961a6fB3F8aD941B2c79c1;
         }
     }
 }

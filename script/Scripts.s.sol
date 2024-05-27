@@ -8,6 +8,7 @@ import { LibDeploy, Create2Deployer } from "./libraries/LibDeploy.sol";
 import { CyberTokenAdapter } from "../src/CyberTokenAdapter.sol";
 import { CyberTokenController } from "../src/CyberTokenController.sol";
 import { CyberStakingPool } from "../src/CyberStakingPool.sol";
+import { CyberVault } from "../src/CyberVault.sol";
 import { LaunchTokenWithdrawer } from "../src/LaunchTokenWithdrawer.sol";
 
 import "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
@@ -228,9 +229,7 @@ contract ConfigWithdrawer is Script, DeploySetting {
 
         if (block.chainid == DeploySetting.BNBT) {
             LaunchTokenWithdrawer(deployParams[block.chainid].withdrawer)
-                .setCyberStakingPool(
-                    deployParams[CYBER_TESTNET].cyberStakingPool
-                );
+                .setCyberVault(deployParams[CYBER_TESTNET].cyberVault);
             LaunchTokenWithdrawer(deployParams[block.chainid].withdrawer)
                 .setOFT(deployParams[block.chainid].lzController);
         } else {
@@ -281,7 +280,7 @@ contract TestBridgeAndStake is Script, DeploySetting {
     }
 }
 
-contract DeployCyberStakingPool is Script, DeploySetting {
+contract DeployCyberVault is Script, DeploySetting {
     function run() external {
         _setDeployParams();
         vm.startBroadcast();
@@ -291,7 +290,7 @@ contract DeployCyberStakingPool is Script, DeploySetting {
                 deployParams[block.chainid].deployerContract
             ).deploy(
                     abi.encodePacked(
-                        type(CyberStakingPool).creationCode,
+                        type(CyberVault).creationCode,
                         abi.encode(
                             deployParams[block.chainid].protocolOwner, // owner
                             deployParams[block.chainid].lzEndpoint, // layerzero endpoint
@@ -300,7 +299,7 @@ contract DeployCyberStakingPool is Script, DeploySetting {
                     ),
                     LibDeploy.SALT
                 );
-            LibDeploy._write(vm, "CyberStakingPool", pool);
+            LibDeploy._write(vm, "CyberVault", pool);
         } else {
             revert("NOT_SUPPORTED_CHAIN_ID");
         }
@@ -309,16 +308,18 @@ contract DeployCyberStakingPool is Script, DeploySetting {
     }
 }
 
-contract ConfigCyberStakingPool is Script, DeploySetting {
+contract ConfigCyberVault is Script, DeploySetting {
     function run() external {
         _setDeployParams();
         vm.startBroadcast();
 
         if (block.chainid == DeploySetting.CYBER_TESTNET) {
-            CyberStakingPool(deployParams[block.chainid].cyberStakingPool)
-                .setOApp(deployParams[block.chainid].lzController);
-            CyberStakingPool(deployParams[block.chainid].cyberStakingPool)
-                .setLockDuration(5 minutes);
+            CyberVault(deployParams[block.chainid].cyberVault).setOApp(
+                deployParams[block.chainid].lzController
+            );
+            CyberVault(deployParams[block.chainid].cyberVault).setLockDuration(
+                5 minutes
+            );
         } else {
             revert("NOT_SUPPORTED_CHAIN_ID");
         }

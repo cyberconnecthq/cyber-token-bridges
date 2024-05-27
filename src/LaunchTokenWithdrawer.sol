@@ -38,7 +38,7 @@ contract LaunchTokenWithdrawer is Ownable {
     uint32 public immutable dstEid;
     uint256 public lockDuration;
     address public oft;
-    address public cyberStakingPool;
+    address public cyberVault;
     // This is a packed array of booleans.
     mapping(uint256 => uint256) private _claimedBitMap;
     mapping(address => LockAmount) public lockAmounts;
@@ -102,7 +102,7 @@ contract LaunchTokenWithdrawer is Ownable {
             .addExecutorLzComposeOption(0, gasLimit, 0);
         SendParam memory sendParam = SendParam(
             dstEid,
-            bytes32(uint256(uint160(cyberStakingPool))),
+            bytes32(uint256(uint160(cyberVault))),
             amount,
             amount,
             extraOption,
@@ -133,7 +133,7 @@ contract LaunchTokenWithdrawer is Ownable {
             .addExecutorLzComposeOption(0, gasLimit, 0);
         SendParam memory sendParam = SendParam(
             dstEid,
-            bytes32(uint256(uint160(cyberStakingPool))),
+            bytes32(uint256(uint160(cyberVault))),
             amount,
             amount,
             extraOption,
@@ -148,9 +148,9 @@ contract LaunchTokenWithdrawer is Ownable {
                             ONLY OWNER
     //////////////////////////////////////////////////////////////*/
 
-    function setCyberStakingPool(address _cyberStakingPool) external onlyOwner {
-        require(_cyberStakingPool != address(0), "ZERO_ADDRESS");
-        cyberStakingPool = _cyberStakingPool;
+    function setCyberVault(address _cyberVault) external onlyOwner {
+        require(_cyberVault != address(0), "ZERO_ADDRESS");
+        cyberVault = _cyberVault;
     }
 
     function setOFT(address _oft) external onlyOwner {
