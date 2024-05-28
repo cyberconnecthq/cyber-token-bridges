@@ -3,14 +3,17 @@
 pragma solidity ^0.8.22;
 
 import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import { IRewardDistribution, DistributionData } from "./interfaces/IRewardDistribution.sol";
 
 /// @dev Accounting contract to manage staking distributions
 /// This is adapted from https://etherscan.io/address/0xedbaee53b410d2c59f1b73144e8d500e94b496a0#code
 // solhint-disable not-rely-on-time
-abstract contract RewardDistribution is Ownable, IRewardDistribution {
+abstract contract RewardDistribution is
+    OwnableUpgradeable,
+    IRewardDistribution
+{
     using SafeERC20 for IERC20;
 
     uint256 public constant PRECISION_FACTOR = 1e18;

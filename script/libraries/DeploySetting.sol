@@ -72,5 +72,63 @@ contract DeploySetting {
             deployParams[CYBER_TESTNET]
                 .cyberVault = 0xFE789B66AD470dd8DD961a6fB3F8aD941B2c79c1;
         }
+
+        {
+            deployParams[CYBER]
+                .deployerContract = 0x8eD1282a1aCE084De1E99E9Ce5ed68896C49d65f;
+            deployParams[CYBER]
+                .protocolOwner = 0x7884f7F04F994da14302a16Cf15E597e31eebECf;
+            deployParams[CYBER]
+                .cyberToken = 0x14778860E937f509e651192a90589dE711Fb88a9;
+            deployParams[CYBER]
+                .lzEndpoint = 0x1a44076050125825900e736c501f859c50fE728c;
+            // deployParams[CYBER]
+            //     .lzController = 0xfd522AE1Cec35a85237D1CddbfFeBe65E49eFb98;
+            deployParams[CYBER].eid = 30283;
+            // deployParams[CYBER]
+            //     .cyberVault = 0xFE789B66AD470dd8DD961a6fB3F8aD941B2c79c1;
+        }
+
+        {
+            deployParams[ETH]
+                .deployerContract = 0x8eD1282a1aCE084De1E99E9Ce5ed68896C49d65f;
+            deployParams[ETH]
+                .protocolOwner = 0x7884f7F04F994da14302a16Cf15E597e31eebECf;
+            deployParams[ETH]
+                .cyberToken = 0x14778860E937f509e651192a90589dE711Fb88a9;
+            deployParams[ETH]
+                .lzEndpoint = 0x1a44076050125825900e736c501f859c50fE728c;
+            deployParams[ETH].eid = 30101;
+            deployParams[ETH]
+                .lzController = 0x3d2fe83ea885C2E43A422C82C738847669708210;
+        }
+
+        {
+            deployParams[OPTIMISM]
+                .deployerContract = 0x8eD1282a1aCE084De1E99E9Ce5ed68896C49d65f;
+            deployParams[OPTIMISM]
+                .protocolOwner = 0x7884f7F04F994da14302a16Cf15E597e31eebECf;
+            deployParams[OPTIMISM]
+                .cyberToken = 0x14778860E937f509e651192a90589dE711Fb88a9;
+            deployParams[OPTIMISM]
+                .lzEndpoint = 0x1a44076050125825900e736c501f859c50fE728c;
+            deployParams[OPTIMISM].eid = 30111;
+            // deployParams[OPTIMISM]
+            //     .lzController = 0xfd522AE1Cec35a85237D1CddbfFeBe65E49eFb98;
+        }
+
+        {
+            deployParams[BNB]
+                .deployerContract = 0x8eD1282a1aCE084De1E99E9Ce5ed68896C49d65f;
+            deployParams[BNB]
+                .protocolOwner = 0x7884f7F04F994da14302a16Cf15E597e31eebECf;
+            deployParams[BNB]
+                .cyberToken = 0x14778860E937f509e651192a90589dE711Fb88a9;
+            deployParams[BNB]
+                .lzEndpoint = 0x1a44076050125825900e736c501f859c50fE728c;
+            deployParams[BNB].eid = 30102;
+            // deployParams[BNB]
+            //     .lzController = 0xfd522AE1Cec35a85237D1CddbfFeBe65E49eFb98;
+        }
     }
 }

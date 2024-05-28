@@ -3,12 +3,11 @@
 pragma solidity ^0.8.22;
 
 import { IERC20, SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import { ERC20Votes } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { EIP712 } from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
-import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
+import { ERC20BurnableUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
+import { ERC20VotesUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
+import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 import { RewardDistribution } from "./RewardDistribution.sol";
 import { DataTypes } from "./libraries/DataTypes.sol";
@@ -20,9 +19,9 @@ import { ICyberStakingPool } from "./interfaces/ICyberStakingPool.sol";
  * @author Cyber
  */
 contract CyberStakingPool is
-    ERC20Burnable,
-    ERC20Votes,
-    Pausable,
+    ERC20BurnableUpgradeable,
+    ERC20VotesUpgradeable,
+    PausableUpgradeable,
     RewardDistribution,
     ICyberStakingPool
 {
@@ -41,8 +40,9 @@ contract CyberStakingPool is
     );
     event Withdraw(uint256 logId, address user, uint256 amount);
     event ClaimReward(uint256 logId, address user, uint256 amount);
-    event RewardsAccrued(address user, uint256 amount);
+    event RewardsAccrued(uint256 logId, address user, uint256 amount);
     event CollectFee(
+        uint256 logId,
         uint16 distributionId,
         uint256 protocolFee,
         uint256 userRewards
@@ -56,8 +56,7 @@ contract CyberStakingPool is
     /// 10000 basis points are equivalent to 100%.
     uint256 public constant MAX_BPS = 1e4;
 
-    IERC20 public immutable cyber;
-    uint256 public totalStaked;
+    IERC20 public cyber;
     // Duration of lock for staked CYBER
     uint256 public lockDuration;
     uint256 public protocolFeeBps;
@@ -76,16 +75,17 @@ contract CyberStakingPool is
                             CONSTRUCTOR & INITIALIZER
     //////////////////////////////////////////////////////////////*/
 
-    constructor(
-        address _owner,
-        address _cyber
-    )
-        ERC20("Staked CYBER", "stCYBER")
-        EIP712("Staked CYBER", "1")
-        Ownable(_owner)
-    {
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(address _owner, address _cyber) external initializer {
         cyber = IERC20(_cyber);
         lockDuration = 7 days;
+        __Pausable_init();
+        __ERC20_init("Staked CYBER", "stCYBER");
+        __EIP712_init("Staked CYBER", "1");
+        __Ownable_init(_owner);
         _pause();
     }
 
@@ -106,7 +106,7 @@ contract CyberStakingPool is
         address from,
         address to,
         uint256 value
-    ) internal virtual override(ERC20, ERC20Votes) {
+    ) internal virtual override(ERC20Upgradeable, ERC20VotesUpgradeable) {
         if (from != address(0) && to != address(0)) {
             require(!paused(), "TRANSFER_PAUSED");
             // Sender
@@ -117,7 +117,7 @@ contract CyberStakingPool is
                 _updateCurrentUnclaimedRewards(to, balanceOf(to));
             }
         }
-        ERC20Votes._update(from, to, value);
+        ERC20VotesUpgradeable._update(from, to, value);
     }
 
     function _collectFee(
@@ -127,11 +127,19 @@ contract CyberStakingPool is
         // Calculate the protocol fee as a percentage of the rewards.
         uint256 protocolFeeAmount = (rewards * protocolFeeBps) / MAX_BPS;
 
+        if (protocolFeeAmount == 0) {
+            return rewards;
+        }
+
         uint256 userRewards = rewards - protocolFeeAmount;
 
         // Emit an event for the fee collection, providing transparency and traceability.
-        emit CollectFee(distributionId, protocolFeeAmount, userRewards);
-
+        emit CollectFee(
+            _logId++,
+            distributionId,
+            protocolFeeAmount,
+            userRewards
+        );
         protocolClaimableFee += protocolFeeAmount;
         protocolAccruedFee += protocolFeeAmount;
 
@@ -148,7 +156,6 @@ contract CyberStakingPool is
 
         cyber.safeTransferFrom(msg.sender, address(this), _amount);
 
-        totalStaked += _amount;
         _mint(msg.sender, _amount);
         emit Stake(_logId++, msg.sender, _amount);
     }
@@ -159,7 +166,6 @@ contract CyberStakingPool is
         require(_amount > 0, "ZERO_AMOUNT");
         require(balanceOf(msg.sender) >= _amount, "INSUFFICIENT_BALANCE");
 
-        totalStaked -= _amount;
         _burn(msg.sender, _amount);
 
         DataTypes.LockAmount memory lockAmount = _lockAmounts[msg.sender];
@@ -280,12 +286,12 @@ contract CyberStakingPool is
                 distributionId,
                 user,
                 stakedByUser,
-                totalStaked
+                totalSupply()
             );
             if (accruedRewards != 0) {
                 bytes32 key = rewardBalanceKey(distributionId, user);
                 _rewardsBalances[key] += accruedRewards;
-                emit RewardsAccrued(user, accruedRewards);
+                emit RewardsAccrued(_logId++, user, accruedRewards);
             }
         }
     }

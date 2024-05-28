@@ -25,7 +25,10 @@ contract DeployAdapter is Script, DeploySetting {
         _setDeployParams();
         vm.startBroadcast();
 
-        if (block.chainid == DeploySetting.SEPOLIA) {
+        if (
+            block.chainid == DeploySetting.SEPOLIA ||
+            block.chainid == DeploySetting.ETH
+        ) {
             address adapter = Create2Deployer(
                 deployParams[block.chainid].deployerContract
             ).deploy(
