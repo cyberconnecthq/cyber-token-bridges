@@ -20,6 +20,49 @@ import { OptionsBuilder } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/lib
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
+contract TempScript is Script, DeploySetting {
+    // the formal properties are documented in the setter functions
+    struct UlnConfig {
+        uint64 confirmations;
+        // we store the length of required DVNs and optional DVNs instead of using DVN.length directly to save gas
+        uint8 requiredDVNCount; // 0 indicate DEFAULT, NIL_DVN_COUNT indicate NONE (to override the value of default)
+        uint8 optionalDVNCount; // 0 indicate DEFAULT, NIL_DVN_COUNT indicate NONE (to override the value of default)
+        uint8 optionalDVNThreshold; // (0, optionalDVNCount]
+        address[] requiredDVNs; // no duplicates. sorted an an ascending order. allowed overlap with optionalDVNs
+        address[] optionalDVNs; // no duplicates. sorted an an ascending order. allowed overlap with requiredDVNs
+    }
+
+    function run() external {
+        _setDeployParams();
+        vm.startBroadcast();
+
+        bytes memory config = ILayerZeroEndpointV2(
+            deployParams[block.chainid].lzEndpoint
+        ).getConfig(
+                deployParams[block.chainid].lzController,
+                deployParams[block.chainid].lzReceiveLib,
+                // deployParams[block.chainid].lzSendLib,
+                deployParams[DeploySetting.BNB].eid,
+                2 // CONFIG_TYPE_ULN
+            );
+        console.logBytes(config);
+
+        UlnConfig memory ulnConfig = abi.decode(config, (UlnConfig));
+        console.log(ulnConfig.confirmations);
+        console.log(ulnConfig.requiredDVNCount);
+        console.log(ulnConfig.optionalDVNCount);
+        console.log(ulnConfig.optionalDVNThreshold);
+        for (uint256 i = 0; i < ulnConfig.requiredDVNs.length; i++) {
+            console.logAddress(ulnConfig.requiredDVNs[i]);
+        }
+        for (uint256 i = 0; i < ulnConfig.optionalDVNs.length; i++) {
+            console.logAddress(ulnConfig.optionalDVNs[i]);
+        }
+
+        vm.stopBroadcast();
+    }
+}
+
 contract DeployAdapter is Script, DeploySetting {
     function run() external {
         _setDeployParams();
@@ -58,7 +101,10 @@ contract DeployController is Script, DeploySetting {
 
         if (
             block.chainid == DeploySetting.BNBT ||
-            block.chainid == DeploySetting.CYBER_TESTNET
+            block.chainid == DeploySetting.CYBER_TESTNET ||
+            block.chainid == DeploySetting.BNB ||
+            block.chainid == DeploySetting.OPTIMISM ||
+            block.chainid == DeploySetting.CYBER
         ) {
             address adapter = Create2Deployer(
                 deployParams[block.chainid].deployerContract
