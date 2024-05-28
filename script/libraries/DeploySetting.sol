@@ -75,6 +75,8 @@ contract DeploySetting {
             deployParams[CYBER_TESTNET].eid = 40280;
             deployParams[CYBER_TESTNET]
                 .cyberVault = 0xFE789B66AD470dd8DD961a6fB3F8aD941B2c79c1;
+            deployParams[CYBER_TESTNET]
+                .treasury = 0x7884f7F04F994da14302a16Cf15E597e31eebECf;
         }
 
         {
