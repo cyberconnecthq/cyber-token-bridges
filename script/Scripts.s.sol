@@ -19,6 +19,7 @@ import { OptionsBuilder } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/lib
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract TempScript is Script, DeploySetting {
     // the formal properties are documented in the setter functions
@@ -335,20 +336,35 @@ contract DeployCyberVault is Script, DeploySetting {
         vm.startBroadcast();
 
         if (block.chainid == DeploySetting.CYBER_TESTNET) {
-            address pool = Create2Deployer(
+            address cyberVaultImpl = Create2Deployer(
+                deployParams[block.chainid].deployerContract
+            ).deploy(
+                    abi.encodePacked(type(CyberVault).creationCode),
+                    LibDeploy.SALT
+                );
+
+            LibDeploy._write(vm, "CyberVault(Impl)", cyberVaultImpl);
+
+            address cyberVaultProxy = Create2Deployer(
                 deployParams[block.chainid].deployerContract
             ).deploy(
                     abi.encodePacked(
-                        type(CyberVault).creationCode,
+                        type(ERC1967Proxy).creationCode,
                         abi.encode(
-                            deployParams[block.chainid].protocolOwner, // owner
-                            deployParams[block.chainid].lzEndpoint, // layerzero endpoint
-                            deployParams[block.chainid].cyberToken // cyber token
+                            cyberVaultImpl,
+                            abi.encodeWithSelector(
+                                CyberVault.initialize.selector,
+                                deployParams[block.chainid].protocolOwner,
+                                deployParams[block.chainid].lzEndpoint,
+                                deployParams[block.chainid].cyberToken,
+                                deployParams[block.chainid].cyberStakingPool,
+                                deployParams[block.chainid].treasury
+                            )
                         )
                     ),
                     LibDeploy.SALT
                 );
-            LibDeploy._write(vm, "CyberVault", pool);
+            LibDeploy._write(vm, "CyberVault(Proxy)", cyberVaultProxy);
         } else {
             revert("NOT_SUPPORTED_CHAIN_ID");
         }
@@ -369,6 +385,46 @@ contract ConfigCyberVault is Script, DeploySetting {
             CyberVault(deployParams[block.chainid].cyberVault).setLockDuration(
                 5 minutes
             );
+        } else {
+            revert("NOT_SUPPORTED_CHAIN_ID");
+        }
+
+        vm.stopBroadcast();
+    }
+}
+
+contract DeployStakingPool is Script, DeploySetting {
+    function run() external {
+        _setDeployParams();
+        vm.startBroadcast();
+
+        if (block.chainid == DeploySetting.CYBER_TESTNET) {
+            address stakingPoolImpl = Create2Deployer(
+                deployParams[block.chainid].deployerContract
+            ).deploy(
+                    abi.encodePacked(type(CyberStakingPool).creationCode),
+                    LibDeploy.SALT
+                );
+
+            LibDeploy._write(vm, "CyberStakingPool(Impl)", stakingPoolImpl);
+
+            address stakingPoolProxy = Create2Deployer(
+                deployParams[block.chainid].deployerContract
+            ).deploy(
+                    abi.encodePacked(
+                        type(ERC1967Proxy).creationCode,
+                        abi.encode(
+                            stakingPoolImpl,
+                            abi.encodeWithSelector(
+                                CyberStakingPool.initialize.selector,
+                                deployParams[block.chainid].protocolOwner,
+                                deployParams[block.chainid].cyberToken
+                            )
+                        )
+                    ),
+                    LibDeploy.SALT
+                );
+            LibDeploy._write(vm, "CyberStakingPool(Proxy)", stakingPoolProxy);
         } else {
             revert("NOT_SUPPORTED_CHAIN_ID");
         }

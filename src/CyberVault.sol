@@ -4,25 +4,37 @@ pragma solidity ^0.8.22;
 
 import { IERC20, SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { ERC20Votes } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { ERC4626, Math } from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
-import { EIP712 } from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
-import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { ERC20VotesUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
+import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import { ERC4626Upgradeable, Math } from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC4626Upgradeable.sol";
+import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import { IOAppComposer } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/interfaces/IOAppComposer.sol";
 import { OFTComposeMsgCodec } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
 
-import { DataTypes } from "./libraries/DataTypes.sol";
-
 import { ICyberStakingPool } from "./interfaces/ICyberStakingPool.sol";
+
+struct LockAmount {
+    uint256 lockEnd;
+    uint256 lockedShares;
+    uint256 lockedAssets;
+}
 
 /**
  * @title CyberVault
  * @author Cyber
  */
-contract CyberVault is ERC4626, ERC20Votes, Pausable, Ownable, IOAppComposer {
+contract CyberVault is
+    ERC4626Upgradeable,
+    ERC20VotesUpgradeable,
+    PausableUpgradeable,
+    OwnableUpgradeable,
+    UUPSUpgradeable,
+    IOAppComposer
+{
     using SafeERC20 for IERC20;
 
     /*//////////////////////////////////////////////////////////////
@@ -32,40 +44,56 @@ contract CyberVault is ERC4626, ERC20Votes, Pausable, Ownable, IOAppComposer {
     event LzCompose(address oApp, address account, uint256 amount);
     event InitiateWithdraw(
         address account,
-        uint256 amount,
-        uint256 totalLocked,
+        uint256 shares,
+        uint256 totalLockedShares,
+        uint256 assets,
+        uint256 totalLockedAssets,
         uint256 lockEnd
     );
+    event CollectFee(uint256 protocolFee, address protocolFeeTreasury);
 
     /*//////////////////////////////////////////////////////////////
                             STORAGE
     //////////////////////////////////////////////////////////////*/
 
-    ICyberStakingPool public immutable cyberStakingPool;
-    address public immutable lzEndpoint;
+    /// @dev MAX_BPS the maximum number of basis points.
+    /// 10000 basis points are equivalent to 100%.
+    uint256 public constant MAX_BPS = 1e4;
+
+    ICyberStakingPool public cyberStakingPool;
+    address public lzEndpoint;
     uint256 public lockDuration;
     address public oApp;
-    mapping(address => DataTypes.LockAmount) internal _lockAmounts;
+    uint256 public protocolFeeBps;
+    address public protocolFeeTreasury;
+    mapping(address => LockAmount) internal _lockAmounts;
 
     /*//////////////////////////////////////////////////////////////
-                            CONSTRUCTOR
+                        CONSTRUCTOR & INITIALIZER
     //////////////////////////////////////////////////////////////*/
 
-    constructor(
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(
         address _owner,
         address _lzEndpoint,
         IERC20 _cyber,
-        address _stakingPool
-    )
-        ERC4626(_cyber)
-        ERC20("Compound CYBER", "cCYBER")
-        EIP712("Compound CYBER", "1")
-        Ownable(_owner)
-    {
+        address _stakingPool,
+        address _protocolFeeTreasury
+    ) external initializer {
+        __ERC4626_init(_cyber);
+        __ERC20_init("Compound CYBER", "cCYBER");
+        __EIP712_init("Compound CYBER", "1");
+        __Ownable_init(_owner);
+        __Pausable_init();
+
         lzEndpoint = _lzEndpoint;
+        protocolFeeTreasury = _protocolFeeTreasury;
         cyberStakingPool = ICyberStakingPool(_stakingPool);
         lockDuration = 7 days;
-        _pause();
+        protocolFeeBps = 1000;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -83,9 +111,16 @@ contract CyberVault is ERC4626, ERC20Votes, Pausable, Ownable, IOAppComposer {
         address receiver,
         address _owner
     ) public override returns (uint256) {
-        uint256 shares = previewWithdraw(assets);
-        _withdraw(msg.sender, receiver, _owner, assets, shares);
-        return shares;
+        LockAmount memory lockAmount = _lockAmounts[_owner];
+        require(assets == lockAmount.lockedAssets, "INVALID_ASSETS");
+        _withdraw(
+            msg.sender,
+            receiver,
+            _owner,
+            assets,
+            lockAmount.lockedShares
+        );
+        return lockAmount.lockedShares;
     }
 
     /** @dev See {IERC4626-redeem}. */
@@ -94,9 +129,16 @@ contract CyberVault is ERC4626, ERC20Votes, Pausable, Ownable, IOAppComposer {
         address receiver,
         address _owner
     ) public override returns (uint256) {
-        uint256 assets = previewRedeem(shares);
-        _withdraw(msg.sender, receiver, _owner, assets, shares);
-        return assets;
+        LockAmount memory lockAmount = _lockAmounts[_owner];
+        require(shares == lockAmount.lockedShares, "INVALID_SHARES");
+        _withdraw(
+            msg.sender,
+            receiver,
+            _owner,
+            lockAmount.lockedAssets,
+            shares
+        );
+        return lockAmount.lockedAssets;
     }
 
     function _withdraw(
@@ -111,27 +153,51 @@ contract CyberVault is ERC4626, ERC20Votes, Pausable, Ownable, IOAppComposer {
             _lockAmounts[_owner].lockEnd <= block.timestamp,
             "LOCKED_PERIOD_NOT_ENDED"
         );
-        require(_lockAmounts[_owner].amount >= shares, "INSUFFICIENT_BALANCE");
-        _lockAmounts[_owner].amount -= shares;
+        require(
+            _lockAmounts[_owner].lockedShares >= shares,
+            "INSUFFICIENT_BALANCE"
+        );
+        delete _lockAmounts[_owner];
 
         if (caller != _owner) {
             _spendAllowance(_owner, caller, shares);
         }
         _burn(address(this), shares);
+        cyberStakingPool.withdraw(assets);
         IERC20(asset()).safeTransfer(receiver, assets);
         emit Withdraw(caller, receiver, _owner, assets, shares);
+    }
+
+    function _deposit(
+        address caller,
+        address receiver,
+        uint256 assets,
+        uint256 shares
+    ) internal override {
+        super._deposit(caller, receiver, assets, shares);
+        claim();
+        stake();
     }
 
     function _update(
         address from,
         address to,
         uint256 value
-    ) internal virtual override(ERC20, ERC20Votes) {
-        ERC20Votes._update(from, to, value);
+    ) internal virtual override(ERC20Upgradeable, ERC20VotesUpgradeable) {
+        ERC20VotesUpgradeable._update(from, to, value);
     }
 
-    function decimals() public view override(ERC4626, ERC20) returns (uint8) {
+    function decimals()
+        public
+        view
+        override(ERC4626Upgradeable, ERC20Upgradeable)
+        returns (uint8)
+    {
         return IERC20Metadata(asset()).decimals();
+    }
+
+    function _authorizeUpgrade(address) internal view override {
+        require(msg.sender == owner(), "ONLY_OWNER");
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -139,12 +205,16 @@ contract CyberVault is ERC4626, ERC20Votes, Pausable, Ownable, IOAppComposer {
     //////////////////////////////////////////////////////////////*/
 
     function initiateRedeem(uint256 shares) external {
+        claim();
+        stake();
         uint256 maxShares = maxRedeem(msg.sender);
         require(shares <= maxShares, "EXCEED_MAX_REDEEM");
         _initiateWithdraw(shares);
     }
 
     function initiateWithdraw(uint256 assets) external {
+        claim();
+        stake();
         uint256 maxAssets = maxWithdraw(msg.sender);
         require(assets <= maxAssets, "EXCEED_MAX_WITHDRAW");
         uint256 shares = previewWithdraw(assets);
@@ -153,19 +223,29 @@ contract CyberVault is ERC4626, ERC20Votes, Pausable, Ownable, IOAppComposer {
 
     function getLockAmount(
         address account
-    ) external view returns (DataTypes.LockAmount memory) {
+    ) external view returns (LockAmount memory) {
         return _lockAmounts[account];
     }
 
-    function stake() external {
+    function stake() public {
         uint256 amount = IERC20(asset()).balanceOf(address(this));
-        require(amount != 0, "ZERO_AMOUNT");
-        IERC20(asset()).approve(address(cyberStakingPool), amount);
-        cyberStakingPool.stake(amount);
+        if (
+            amount + cyberStakingPool.balanceOf(address(this)) >=
+            cyberStakingPool.minimalStakeAmount()
+        ) {
+            IERC20(asset()).approve(address(cyberStakingPool), amount);
+            cyberStakingPool.stake(amount);
+        }
     }
 
-    function claim(uint16 distributionId) external {
-        cyberStakingPool.claimReward(distributionId);
+    function claim() public {
+        uint256 rewards = cyberStakingPool.claimAllRewards();
+        uint256 protocolFeeAmount = (rewards * protocolFeeBps) / MAX_BPS;
+        if (protocolFeeAmount == 0) {
+            return;
+        }
+        IERC20(asset()).safeTransfer(protocolFeeTreasury, protocolFeeAmount);
+        emit CollectFee(protocolFeeAmount, protocolFeeTreasury);
     }
 
     function lzCompose(
@@ -202,6 +282,17 @@ contract CyberVault is ERC4626, ERC20Votes, Pausable, Ownable, IOAppComposer {
         oApp = _oApp;
     }
 
+    function setProtocolFeeBps(uint256 _protocolFeeBps) external onlyOwner {
+        require(_protocolFeeBps <= MAX_BPS, "INVALID_PROTOCOL_FEE_BPS");
+        protocolFeeBps = _protocolFeeBps;
+    }
+
+    function setProtocolFeeTreasury(
+        address _protocolFeeTreasury
+    ) external onlyOwner {
+        protocolFeeTreasury = _protocolFeeTreasury;
+    }
+
     /*//////////////////////////////////////////////////////////////
                             PRIVATE
     //////////////////////////////////////////////////////////////*/
@@ -210,15 +301,22 @@ contract CyberVault is ERC4626, ERC20Votes, Pausable, Ownable, IOAppComposer {
 
         _transfer(msg.sender, address(this), shares);
 
-        DataTypes.LockAmount memory lockAmount = _lockAmounts[msg.sender];
-        lockAmount.amount += shares;
+        uint256 assets = previewRedeem(shares);
+        cyberStakingPool.unstake(assets);
+
+        LockAmount memory lockAmount = _lockAmounts[msg.sender];
+        lockAmount.lockedShares += shares;
+        lockAmount.lockedAssets += assets;
         lockAmount.lockEnd = block.timestamp + lockDuration;
+
         _lockAmounts[msg.sender] = lockAmount;
 
         emit InitiateWithdraw(
             msg.sender,
             shares,
-            lockAmount.amount,
+            lockAmount.lockedShares,
+            assets,
+            lockAmount.lockedAssets,
             lockAmount.lockEnd
         );
     }

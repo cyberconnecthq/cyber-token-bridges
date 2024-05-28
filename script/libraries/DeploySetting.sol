@@ -14,6 +14,8 @@ contract DeploySetting {
         address withdrawer;
         address lzSendLib;
         address lzReceiveLib;
+        address cyberStakingPool;
+        address treasury;
     }
 
     mapping(uint256 => DeployParameters) internal deployParams;

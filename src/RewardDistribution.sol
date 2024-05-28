@@ -16,8 +16,8 @@ abstract contract RewardDistribution is
 {
     using SafeERC20 for IERC20;
 
-    uint256 public constant PRECISION_FACTOR = 1e18;
     uint16 public totalDistributions;
+    uint256 public constant PRECISION_FACTOR = 1e18;
 
     // Distribution ID => Distribution Data
     mapping(uint16 => DistributionData) public distributions;
