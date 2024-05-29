@@ -35,9 +35,52 @@ contract CyberStakingPoolTest is Test {
         cyberStakingPool = CyberStakingPool(cyberStakingPoolProxy);
     }
 
-    function testDeposit() public {}
+    function testDeposit() public {
+        uint256 amount = 1000 ether;
+        vm.startPrank(alice);
+        cyberToken.mint(alice, amount);
+        cyberToken.approve(address(cyberStakingPool), amount);
 
-    function testWithdraw() public {}
+        cyberStakingPool.stake(amount);
 
-    function testTransfer() public {}
+        assertEq(
+            cyberToken.balanceOf(address(cyberStakingPool)),
+            amount,
+            "ERR1"
+        );
+        assertEq(cyberStakingPool.balanceOf(alice), amount, "ERR2");
+    }
+
+    function testWithdraw() public {
+        uint256 amount = 1000 ether;
+        vm.startPrank(alice);
+        cyberToken.mint(alice, amount);
+        cyberToken.approve(address(cyberStakingPool), amount);
+
+        cyberStakingPool.stake(amount);
+
+        bytes32 key = bytes32(uint256(uint160(alice)));
+        cyberStakingPool.unstake(amount, key);
+
+        vm.expectRevert("LOCKED_PERIOD_NOT_ENDED");
+        cyberStakingPool.withdraw(key);
+
+        vm.warp(block.timestamp + cyberStakingPool.lockDuration());
+
+        cyberStakingPool.withdraw(key);
+        assertEq(cyberToken.balanceOf(alice), amount, "ERR3");
+        assertEq(cyberStakingPool.balanceOf(alice), 0, "ERR4");
+    }
+
+    function testTransfer() public {
+        uint256 amount = 1000 ether;
+        vm.startPrank(alice);
+        cyberToken.mint(alice, amount);
+        cyberToken.approve(address(cyberStakingPool), amount);
+
+        cyberStakingPool.stake(amount);
+
+        vm.expectRevert("TRANSFER_PAUSED");
+        cyberStakingPool.transfer(bob, amount);
+    }
 }

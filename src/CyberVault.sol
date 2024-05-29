@@ -12,9 +12,6 @@ import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/cry
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-import { IOAppComposer } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/interfaces/IOAppComposer.sol";
-import { OFTComposeMsgCodec } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
-
 import { ICyberStakingPool } from "./interfaces/ICyberStakingPool.sol";
 
 struct LockAmount {
@@ -32,8 +29,7 @@ contract CyberVault is
     ERC20VotesUpgradeable,
     PausableUpgradeable,
     OwnableUpgradeable,
-    UUPSUpgradeable,
-    IOAppComposer
+    UUPSUpgradeable
 {
     using SafeERC20 for IERC20;
 
@@ -41,7 +37,6 @@ contract CyberVault is
                             EVENT
     //////////////////////////////////////////////////////////////*/
 
-    event LzCompose(address oApp, address account, uint256 amount);
     event InitiateWithdraw(
         address account,
         uint256 shares,
@@ -102,7 +97,10 @@ contract CyberVault is
 
     /** @dev See {IERC4626-totalAssets}. */
     function totalAssets() public view override returns (uint256) {
-        return cyberStakingPool.balanceOf(address(this));
+        return
+            cyberStakingPool.balanceOf(address(this)) +
+            cyberStakingPool.totalLockedAmount(address(this)) +
+            IERC20(asset()).balanceOf(address(this));
     }
 
     /** @dev See {IERC4626-withdraw}. */
@@ -148,22 +146,21 @@ contract CyberVault is
         uint256 assets,
         uint256 shares
     ) internal override {
-        require(_lockAmounts[_owner].lockEnd != 0, "NOT_AVAILABLE_TO_WITHDRAW");
+        LockAmount memory lockAmount = _lockAmounts[_owner];
+        require(lockAmount.lockEnd != 0, "NOT_AVAILABLE_TO_WITHDRAW");
         require(
-            _lockAmounts[_owner].lockEnd <= block.timestamp,
+            lockAmount.lockEnd <= block.timestamp,
             "LOCKED_PERIOD_NOT_ENDED"
         );
-        require(
-            _lockAmounts[_owner].lockedShares >= shares,
-            "INSUFFICIENT_BALANCE"
-        );
+        require(lockAmount.lockedShares >= shares, "INSUFFICIENT_BALANCE");
         delete _lockAmounts[_owner];
 
         if (caller != _owner) {
             _spendAllowance(_owner, caller, shares);
         }
         _burn(address(this), shares);
-        cyberStakingPool.withdraw(assets);
+        bytes32 key = bytes32(uint256(uint160(_owner)));
+        cyberStakingPool.withdraw(key);
         IERC20(asset()).safeTransfer(receiver, assets);
         emit Withdraw(caller, receiver, _owner, assets, shares);
     }
@@ -175,7 +172,6 @@ contract CyberVault is
         uint256 shares
     ) internal override {
         super._deposit(caller, receiver, assets, shares);
-        claim();
         stake();
     }
 
@@ -206,7 +202,6 @@ contract CyberVault is
 
     function initiateRedeem(uint256 shares) external {
         claim();
-        stake();
         uint256 maxShares = maxRedeem(msg.sender);
         require(shares <= maxShares, "EXCEED_MAX_REDEEM");
         _initiateWithdraw(shares);
@@ -214,7 +209,6 @@ contract CyberVault is
 
     function initiateWithdraw(uint256 assets) external {
         claim();
-        stake();
         uint256 maxAssets = maxWithdraw(msg.sender);
         require(assets <= maxAssets, "EXCEED_MAX_WITHDRAW");
         uint256 shares = previewWithdraw(assets);
@@ -244,31 +238,13 @@ contract CyberVault is
         if (protocolFeeAmount == 0) {
             return;
         }
-        IERC20(asset()).safeTransfer(protocolFeeTreasury, protocolFeeAmount);
+        deposit(protocolFeeAmount, protocolFeeTreasury);
         emit CollectFee(protocolFeeAmount, protocolFeeTreasury);
     }
 
-    function lzCompose(
-        address _oApp,
-        bytes32 /*_guid*/,
-        bytes calldata message,
-        address /*Executor*/,
-        bytes calldata /*Executor Data*/
-    ) external payable override {
-        require(_oApp == oApp, "OAPP_NOT_ALLOWED");
-        require(msg.sender == lzEndpoint, "SENDER_NOT_ALLOWED");
-
-        // Extract the composed message from the delivered message using the MsgCodec
-        bytes memory composeMsgContent = OFTComposeMsgCodec.composeMsg(message);
-        (address account, uint256 assets) = abi.decode(
-            composeMsgContent,
-            (address, uint256)
-        );
-
-        uint256 shares = previewDeposit(assets);
-        _mint(account, shares);
-        emit Deposit(address(this), account, assets, shares);
-        emit LzCompose(oApp, account, assets);
+    function claimAndStake() external {
+        claim();
+        stake();
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -302,7 +278,8 @@ contract CyberVault is
         _transfer(msg.sender, address(this), shares);
 
         uint256 assets = previewRedeem(shares);
-        cyberStakingPool.unstake(assets);
+        bytes32 key = bytes32(uint256(uint160(msg.sender)));
+        cyberStakingPool.unstake(assets, key);
 
         LockAmount memory lockAmount = _lockAmounts[msg.sender];
         lockAmount.lockedShares += shares;

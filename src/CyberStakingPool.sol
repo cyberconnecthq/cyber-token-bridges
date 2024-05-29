@@ -37,9 +37,10 @@ contract CyberStakingPool is
         address user,
         uint256 amount,
         uint256 totalLocked,
-        uint256 lockEnd
+        uint256 lockEnd,
+        bytes32 key
     );
-    event Withdraw(uint256 logId, address user, uint256 amount);
+    event Withdraw(uint256 logId, address user, uint256 amount, bytes32 key);
     event ClaimReward(
         uint256 logId,
         uint16 distributionId,
@@ -76,10 +77,12 @@ contract CyberStakingPool is
 
     uint256 internal _minimalStakeAmount;
 
-    // User address => lock amount for withdrawal
-    mapping(address => LockAmount) internal _lockAmounts;
+    // User address => key => lock amount for withdrawal
+    mapping(address => mapping(bytes32 => LockAmount))
+        internal _lockedAmountByKey;
     /// hash(distribution id, user) => rewardsBalance
     mapping(bytes32 => uint256) private _rewardsBalances;
+    mapping(address => uint256) public lockedAmounts;
 
     // Log ID for each event
     uint256 private _logId;
@@ -123,7 +126,7 @@ contract CyberStakingPool is
         address to,
         uint256 value
     ) internal virtual override(ERC20Upgradeable, ERC20VotesUpgradeable) {
-        if (from != address(0) && to != address(0)) {
+        if (from != address(0) && to != address(0) && to != address(this)) {
             require(!paused(), "TRANSFER_PAUSED");
             // Sender
             _updateCurrentUnclaimedRewards(from, balanceOf(from));
@@ -189,46 +192,43 @@ contract CyberStakingPool is
     }
 
     function unstake(
-        uint256 _amount
+        uint256 _amount,
+        bytes32 _key
     ) external override updateReward(msg.sender) {
         require(_amount > 0, "ZERO_AMOUNT");
         require(balanceOf(msg.sender) >= _amount, "INSUFFICIENT_BALANCE");
 
-        _burn(msg.sender, _amount);
+        _transfer(msg.sender, address(this), _amount);
 
-        LockAmount memory lockAmount = _lockAmounts[msg.sender];
+        lockedAmounts[msg.sender] += _amount;
+        LockAmount memory lockAmount = _lockedAmountByKey[msg.sender][_key];
         lockAmount.amount += _amount;
         lockAmount.lockEnd = block.timestamp + lockDuration;
-        _lockAmounts[msg.sender] = lockAmount;
+        _lockedAmountByKey[msg.sender][_key] = lockAmount;
 
         emit Unstake(
             _logId++,
             msg.sender,
             _amount,
             lockAmount.amount,
-            lockAmount.lockEnd
+            lockAmount.lockEnd,
+            _key
         );
     }
 
-    function withdraw(
-        uint256 _amount
-    ) external override updateReward(msg.sender) {
+    function withdraw(bytes32 _key) external override updateReward(msg.sender) {
+        LockAmount memory lockAmount = _lockedAmountByKey[msg.sender][_key];
+        require(lockAmount.lockEnd != 0, "NOT_AVAILABLE_TO_WITHDRAW");
         require(
-            _lockAmounts[msg.sender].lockEnd != 0,
-            "NOT_AVAILABLE_TO_WITHDRAW"
-        );
-        require(
-            _lockAmounts[msg.sender].lockEnd <= block.timestamp,
+            lockAmount.lockEnd <= block.timestamp,
             "LOCKED_PERIOD_NOT_ENDED"
         );
-        require(
-            _lockAmounts[msg.sender].amount >= _amount,
-            "INSUFFICIENT_BALANCE"
-        );
-        _lockAmounts[msg.sender].amount -= _amount;
+        delete _lockedAmountByKey[msg.sender][_key];
+        _burn(address(this), lockAmount.amount);
+        lockedAmounts[msg.sender] -= lockAmount.amount;
 
-        cyber.safeTransfer(msg.sender, _amount);
-        emit Withdraw(_logId++, msg.sender, _amount);
+        cyber.safeTransfer(msg.sender, lockAmount.amount);
+        emit Withdraw(_logId++, msg.sender, lockAmount.amount, _key);
     }
 
     function claimAllRewards()
@@ -254,10 +254,17 @@ contract CyberStakingPool is
         return _rewardsBalances[rewardBalanceKey(distributionId, user)];
     }
 
-    function getLockAmount(
-        address user
+    function getLockedAmountByKey(
+        address user,
+        bytes32 key
     ) external view returns (LockAmount memory) {
-        return _lockAmounts[user];
+        return _lockedAmountByKey[user][key];
+    }
+
+    function totalLockedAmount(
+        address user
+    ) external view override returns (uint256) {
+        return lockedAmounts[user];
     }
 
     /*//////////////////////////////////////////////////////////////

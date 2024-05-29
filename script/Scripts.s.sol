@@ -393,7 +393,7 @@ contract ConfigCyberVault is Script, DeploySetting {
     }
 }
 
-contract DeployStakingPool is Script, DeploySetting {
+contract DeployCyberStakingPool is Script, DeploySetting {
     function run() external {
         _setDeployParams();
         vm.startBroadcast();
@@ -425,6 +425,24 @@ contract DeployStakingPool is Script, DeploySetting {
                     LibDeploy.SALT
                 );
             LibDeploy._write(vm, "CyberStakingPool(Proxy)", stakingPoolProxy);
+        } else {
+            revert("NOT_SUPPORTED_CHAIN_ID");
+        }
+
+        vm.stopBroadcast();
+    }
+}
+
+contract ConfigCyberStakingPool is Script, DeploySetting {
+    function run() external {
+        _setDeployParams();
+        vm.startBroadcast();
+
+        if (block.chainid == DeploySetting.CYBER_TESTNET) {
+            CyberStakingPool(deployParams[block.chainid].cyberStakingPool)
+                .setLockDuration(5 minutes);
+            CyberStakingPool(deployParams[block.chainid].cyberStakingPool)
+                .setMinimalStakeAmount(1 ether);
         } else {
             revert("NOT_SUPPORTED_CHAIN_ID");
         }

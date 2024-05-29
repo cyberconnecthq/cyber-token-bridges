@@ -12,11 +12,12 @@ struct LockAmount {
 interface ICyberStakingPool is IERC20 {
     function minimalStakeAmount() external view returns (uint256);
     function stake(uint256 _amount) external;
-    function unstake(uint256 _amount) external;
-    function withdraw(uint256 _amount) external;
+    function unstake(uint256 _amount, bytes32 _key) external;
+    function withdraw(bytes32 _key) external;
     function claimAllRewards() external returns (uint256);
     function rewardBalance(
         uint16 _distributionId,
         address _user
     ) external view returns (uint256);
+    function totalLockedAmount(address user) external view returns (uint256);
 }
