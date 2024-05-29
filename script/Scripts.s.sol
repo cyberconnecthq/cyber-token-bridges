@@ -7,6 +7,9 @@ import { DeploySetting } from "./libraries/DeploySetting.sol";
 import { LibDeploy, Create2Deployer } from "./libraries/LibDeploy.sol";
 import { CyberTokenAdapter } from "../src/CyberTokenAdapter.sol";
 import { CyberTokenController } from "../src/CyberTokenController.sol";
+import { CyberStakingPool } from "../src/CyberStakingPool.sol";
+import { CyberVault } from "../src/CyberVault.sol";
+import { LaunchTokenWithdrawer } from "../src/LaunchTokenWithdrawer.sol";
 
 import "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 import "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFTCore.sol";
@@ -16,13 +19,60 @@ import { OptionsBuilder } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/lib
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+
+contract TempScript is Script, DeploySetting {
+    // the formal properties are documented in the setter functions
+    struct UlnConfig {
+        uint64 confirmations;
+        // we store the length of required DVNs and optional DVNs instead of using DVN.length directly to save gas
+        uint8 requiredDVNCount; // 0 indicate DEFAULT, NIL_DVN_COUNT indicate NONE (to override the value of default)
+        uint8 optionalDVNCount; // 0 indicate DEFAULT, NIL_DVN_COUNT indicate NONE (to override the value of default)
+        uint8 optionalDVNThreshold; // (0, optionalDVNCount]
+        address[] requiredDVNs; // no duplicates. sorted an an ascending order. allowed overlap with optionalDVNs
+        address[] optionalDVNs; // no duplicates. sorted an an ascending order. allowed overlap with requiredDVNs
+    }
+
+    function run() external {
+        _setDeployParams();
+        vm.startBroadcast();
+
+        bytes memory config = ILayerZeroEndpointV2(
+            deployParams[block.chainid].lzEndpoint
+        ).getConfig(
+                deployParams[block.chainid].lzController,
+                deployParams[block.chainid].lzReceiveLib,
+                // deployParams[block.chainid].lzSendLib,
+                deployParams[DeploySetting.BNB].eid,
+                2 // CONFIG_TYPE_ULN
+            );
+        console.logBytes(config);
+
+        UlnConfig memory ulnConfig = abi.decode(config, (UlnConfig));
+        console.log(ulnConfig.confirmations);
+        console.log(ulnConfig.requiredDVNCount);
+        console.log(ulnConfig.optionalDVNCount);
+        console.log(ulnConfig.optionalDVNThreshold);
+        for (uint256 i = 0; i < ulnConfig.requiredDVNs.length; i++) {
+            console.logAddress(ulnConfig.requiredDVNs[i]);
+        }
+        for (uint256 i = 0; i < ulnConfig.optionalDVNs.length; i++) {
+            console.logAddress(ulnConfig.optionalDVNs[i]);
+        }
+
+        vm.stopBroadcast();
+    }
+}
 
 contract DeployAdapter is Script, DeploySetting {
     function run() external {
         _setDeployParams();
         vm.startBroadcast();
 
-        if (block.chainid == DeploySetting.SEPOLIA) {
+        if (
+            block.chainid == DeploySetting.SEPOLIA ||
+            block.chainid == DeploySetting.ETH
+        ) {
             address adapter = Create2Deployer(
                 deployParams[block.chainid].deployerContract
             ).deploy(
@@ -52,7 +102,10 @@ contract DeployController is Script, DeploySetting {
 
         if (
             block.chainid == DeploySetting.BNBT ||
-            block.chainid == DeploySetting.CYBER_TESTNET
+            block.chainid == DeploySetting.CYBER_TESTNET ||
+            block.chainid == DeploySetting.BNB ||
+            block.chainid == DeploySetting.OPTIMISM ||
+            block.chainid == DeploySetting.CYBER
         ) {
             address adapter = Create2Deployer(
                 deployParams[block.chainid].deployerContract
@@ -91,7 +144,7 @@ contract ConfigOApp is Script, DeploySetting {
                 block.chainid
             ];
             DeployParameters memory toChainParams = deployParams[
-                DeploySetting.SEPOLIA
+                DeploySetting.BNBT
             ];
             OFTCore(fromChainParams.lzController).setPeer(
                 toChainParams.eid,
@@ -99,12 +152,17 @@ contract ConfigOApp is Script, DeploySetting {
             );
             bytes memory receiveOption = OptionsBuilder
                 .newOptions()
-                .addExecutorLzReceiveOption(70000, 0);
+                .addExecutorLzReceiveOption(150000, 0);
             EnforcedOptionParam[]
-                memory enforcedOptions = new EnforcedOptionParam[](1);
+                memory enforcedOptions = new EnforcedOptionParam[](2);
             enforcedOptions[0] = EnforcedOptionParam(
                 toChainParams.eid,
-                1,
+                1, // SEND
+                receiveOption
+            );
+            enforcedOptions[1] = EnforcedOptionParam(
+                toChainParams.eid,
+                2, // SEND_AND_CALL
                 receiveOption
             );
             OFTCore(fromChainParams.lzController).setEnforcedOptions(
@@ -175,6 +233,216 @@ contract TransferTokenOwner is Script, DeploySetting {
             Ownable(deployParams[block.chainid].cyberToken).transferOwnership(
                 deployParams[block.chainid].lzController
             );
+        } else {
+            revert("NOT_SUPPORTED_CHAIN_ID");
+        }
+
+        vm.stopBroadcast();
+    }
+}
+
+contract DeployWithdrawer is Script, DeploySetting {
+    function run() external {
+        _setDeployParams();
+        vm.startBroadcast();
+
+        if (block.chainid == DeploySetting.BNBT) {
+            address withdrawer = Create2Deployer(
+                deployParams[block.chainid].deployerContract
+            ).deploy(
+                    abi.encodePacked(
+                        type(LaunchTokenWithdrawer).creationCode,
+                        abi.encode(
+                            deployParams[block.chainid].protocolOwner, // owner
+                            deployParams[block.chainid].cyberToken, // cyber token
+                            bytes32(
+                                0xc384fa53f80665caf7bace52728ff6ec249baccd23763cbe58cd43b086ac6925
+                            ), // merkle root
+                            deployParams[DeploySetting.CYBER_TESTNET].eid // layerzero id
+                        )
+                    ),
+                    LibDeploy.SALT
+                );
+            LibDeploy._write(vm, "LaunchTokenWithdrawer", withdrawer);
+        } else {
+            revert("NOT_SUPPORTED_CHAIN_ID");
+        }
+
+        vm.stopBroadcast();
+    }
+}
+
+contract ConfigWithdrawer is Script, DeploySetting {
+    function run() external {
+        _setDeployParams();
+        vm.startBroadcast();
+
+        if (block.chainid == DeploySetting.BNBT) {
+            LaunchTokenWithdrawer(deployParams[block.chainid].withdrawer)
+                .setCyberVault(deployParams[CYBER_TESTNET].cyberVault);
+            LaunchTokenWithdrawer(deployParams[block.chainid].withdrawer)
+                .setOFT(deployParams[block.chainid].lzController);
+        } else {
+            revert("NOT_SUPPORTED_CHAIN_ID");
+        }
+
+        vm.stopBroadcast();
+    }
+}
+
+contract TestBridgeAndStake is Script, DeploySetting {
+    function run() external {
+        _setDeployParams();
+        vm.startBroadcast();
+
+        if (block.chainid == DeploySetting.BNBT) {
+            bytes32[] memory merkleProof = new bytes32[](2);
+            merkleProof[0] = bytes32(
+                0x656c2b18f876f81b6f8f77f9d6dddc13e3bc3bce90786ddf6fd8e386e3faa1dc
+            );
+            merkleProof[1] = bytes32(
+                0xe7b5a97720b58f02fc30a748f545603cb455138f10c7c5470e492b9c88f5c25c
+            );
+            MessagingFee memory msgFee = LaunchTokenWithdrawer(
+                deployParams[block.chainid].withdrawer
+            ).quoteBridge(
+                    0,
+                    0x0e0bE581B17684f849AF6964D731FCe0F7d366BD,
+                    1,
+                    merkleProof,
+                    200000
+                );
+
+            LaunchTokenWithdrawer(deployParams[block.chainid].withdrawer)
+                .bridge{ value: msgFee.nativeFee }(
+                0,
+                0x0e0bE581B17684f849AF6964D731FCe0F7d366BD,
+                1,
+                merkleProof,
+                msgFee,
+                200000
+            );
+        } else {
+            revert("NOT_SUPPORTED_CHAIN_ID");
+        }
+
+        vm.stopBroadcast();
+    }
+}
+
+contract DeployCyberVault is Script, DeploySetting {
+    function run() external {
+        _setDeployParams();
+        vm.startBroadcast();
+
+        if (block.chainid == DeploySetting.CYBER_TESTNET) {
+            address cyberVaultImpl = Create2Deployer(
+                deployParams[block.chainid].deployerContract
+            ).deploy(
+                    abi.encodePacked(type(CyberVault).creationCode),
+                    LibDeploy.SALT
+                );
+
+            LibDeploy._write(vm, "CyberVault(Impl)", cyberVaultImpl);
+
+            address cyberVaultProxy = Create2Deployer(
+                deployParams[block.chainid].deployerContract
+            ).deploy(
+                    abi.encodePacked(
+                        type(ERC1967Proxy).creationCode,
+                        abi.encode(
+                            cyberVaultImpl,
+                            abi.encodeWithSelector(
+                                CyberVault.initialize.selector,
+                                deployParams[block.chainid].protocolOwner,
+                                deployParams[block.chainid].lzEndpoint,
+                                deployParams[block.chainid].cyberToken,
+                                deployParams[block.chainid].cyberStakingPool,
+                                deployParams[block.chainid].treasury
+                            )
+                        )
+                    ),
+                    LibDeploy.SALT
+                );
+            LibDeploy._write(vm, "CyberVault(Proxy)", cyberVaultProxy);
+        } else {
+            revert("NOT_SUPPORTED_CHAIN_ID");
+        }
+
+        vm.stopBroadcast();
+    }
+}
+
+contract ConfigCyberVault is Script, DeploySetting {
+    function run() external {
+        _setDeployParams();
+        vm.startBroadcast();
+
+        if (block.chainid == DeploySetting.CYBER_TESTNET) {
+            CyberVault(deployParams[block.chainid].cyberVault).setOApp(
+                deployParams[block.chainid].lzController
+            );
+            CyberVault(deployParams[block.chainid].cyberVault).setLockDuration(
+                5 minutes
+            );
+        } else {
+            revert("NOT_SUPPORTED_CHAIN_ID");
+        }
+
+        vm.stopBroadcast();
+    }
+}
+
+contract DeployCyberStakingPool is Script, DeploySetting {
+    function run() external {
+        _setDeployParams();
+        vm.startBroadcast();
+
+        if (block.chainid == DeploySetting.CYBER_TESTNET) {
+            address stakingPoolImpl = Create2Deployer(
+                deployParams[block.chainid].deployerContract
+            ).deploy(
+                    abi.encodePacked(type(CyberStakingPool).creationCode),
+                    LibDeploy.SALT
+                );
+
+            LibDeploy._write(vm, "CyberStakingPool(Impl)", stakingPoolImpl);
+
+            address stakingPoolProxy = Create2Deployer(
+                deployParams[block.chainid].deployerContract
+            ).deploy(
+                    abi.encodePacked(
+                        type(ERC1967Proxy).creationCode,
+                        abi.encode(
+                            stakingPoolImpl,
+                            abi.encodeWithSelector(
+                                CyberStakingPool.initialize.selector,
+                                deployParams[block.chainid].protocolOwner,
+                                deployParams[block.chainid].cyberToken
+                            )
+                        )
+                    ),
+                    LibDeploy.SALT
+                );
+            LibDeploy._write(vm, "CyberStakingPool(Proxy)", stakingPoolProxy);
+        } else {
+            revert("NOT_SUPPORTED_CHAIN_ID");
+        }
+
+        vm.stopBroadcast();
+    }
+}
+
+contract ConfigCyberStakingPool is Script, DeploySetting {
+    function run() external {
+        _setDeployParams();
+        vm.startBroadcast();
+
+        if (block.chainid == DeploySetting.CYBER_TESTNET) {
+            CyberStakingPool(deployParams[block.chainid].cyberStakingPool)
+                .setLockDuration(5 minutes);
+            CyberStakingPool(deployParams[block.chainid].cyberStakingPool)
+                .setMinimalStakeAmount(1 ether);
         } else {
             revert("NOT_SUPPORTED_CHAIN_ID");
         }
