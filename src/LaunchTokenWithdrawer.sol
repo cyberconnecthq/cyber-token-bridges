@@ -6,16 +6,12 @@ import { IERC20, SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/Saf
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { MerkleProof } from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
-import { IOFT, SendParam, OFTReceipt, MessagingReceipt, MessagingFee } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFTCore.sol";
-import { OptionsBuilder } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
-
 /**
  * @title LaunchTokenWithdrawer
  * @author Cyber
  */
 contract LaunchTokenWithdrawer is Ownable {
     using SafeERC20 for IERC20;
-    using OptionsBuilder for bytes;
 
     struct LockAmount {
         uint256 lockEnd;
@@ -26,8 +22,14 @@ contract LaunchTokenWithdrawer is Ownable {
                             EVENT
     //////////////////////////////////////////////////////////////*/
 
-    event InitiateWithdraw(uint256 index, address account, uint256 amount);
-    event Withdraw(address account, uint256 amount);
+    event InitiateWithdraw(
+        uint256 logId,
+        uint256 index,
+        address account,
+        uint256 amount
+    );
+    event Withdraw(uint256 logId, address account, uint256 amount);
+    event BridgeAndStake(uint256 logId, address account, uint256 amount);
 
     /*//////////////////////////////////////////////////////////////
                             STORAGE
@@ -35,13 +37,14 @@ contract LaunchTokenWithdrawer is Ownable {
 
     address public immutable cyber;
     bytes32 public immutable merkleRoot;
-    uint32 public immutable dstEid;
+    address public bridgeRecipient;
     uint256 public lockDuration;
-    address public oft;
-    address public cyberVault;
+    mapping(address => LockAmount) public lockAmounts;
+
     // This is a packed array of booleans.
     mapping(uint256 => uint256) private _claimedBitMap;
-    mapping(address => LockAmount) public lockAmounts;
+
+    uint256 private _logId;
 
     /*//////////////////////////////////////////////////////////////
                         CONSTRUCTOR
@@ -50,12 +53,12 @@ contract LaunchTokenWithdrawer is Ownable {
         address _owner,
         address _cyber,
         bytes32 _merkleRoot,
-        uint32 _dstEid
+        address _bridgeRecipient
     ) Ownable(_owner) {
         cyber = _cyber;
         merkleRoot = _merkleRoot;
-        dstEid = _dstEid;
         lockDuration = 7 days;
+        bridgeRecipient = _bridgeRecipient;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -78,84 +81,35 @@ contract LaunchTokenWithdrawer is Ownable {
         _consumeProof(index, account, amount, merkleProof);
         lockAmounts[account].lockEnd = block.timestamp + lockDuration;
         lockAmounts[account].amount = amount;
-        emit InitiateWithdraw(index, account, amount);
+        emit InitiateWithdraw(_logId++, index, account, amount);
     }
 
     function withdraw(address account) external {
         uint256 amount = lockAmounts[account].amount;
+        require(amount > 0, "NO_LOCKED_AMOUNT");
         require(lockAmounts[account].lockEnd <= block.timestamp, "LOCKED");
         delete lockAmounts[account];
         IERC20(cyber).safeTransfer(account, amount);
-        emit Withdraw(account, amount);
+        emit Withdraw(_logId++, account, amount);
     }
 
-    function quoteBridge(
+    function bridgeAndStake(
         uint256 index,
         address account,
         uint256 amount,
-        bytes32[] calldata merkleProof,
-        uint128 gasLimit
-    ) external view returns (MessagingFee memory msgFee) {
-        _verifyProof(index, account, amount, merkleProof);
-        bytes memory extraOption = OptionsBuilder
-            .newOptions()
-            .addExecutorLzComposeOption(0, gasLimit, 0);
-        SendParam memory sendParam = SendParam(
-            dstEid,
-            bytes32(uint256(uint160(cyberVault))),
-            amount,
-            amount,
-            extraOption,
-            abi.encode(account, amount),
-            new bytes(0)
-        );
-        return IOFT(oft).quoteSend(sendParam, false);
-    }
-
-    function bridge(
-        uint256 index,
-        address account,
-        uint256 amount,
-        bytes32[] calldata merkleProof,
-        MessagingFee calldata fee,
-        uint128 gasLimit
-    )
-        external
-        payable
-        returns (
-            MessagingReceipt memory msgReceipt,
-            OFTReceipt memory oftReceipt
-        )
-    {
+        bytes32[] calldata merkleProof
+    ) external {
         _consumeProof(index, account, amount, merkleProof);
-        bytes memory extraOption = OptionsBuilder
-            .newOptions()
-            .addExecutorLzComposeOption(0, gasLimit, 0);
-        SendParam memory sendParam = SendParam(
-            dstEid,
-            bytes32(uint256(uint160(cyberVault))),
-            amount,
-            amount,
-            extraOption,
-            abi.encode(account, amount),
-            new bytes(0)
-        );
-        IERC20(cyber).approve(oft, amount);
-        return IOFT(oft).send{ value: msg.value }(sendParam, fee, msg.sender);
+        IERC20(cyber).safeTransfer(bridgeRecipient, amount);
+        emit BridgeAndStake(_logId++, account, amount);
     }
 
     /*//////////////////////////////////////////////////////////////
                             ONLY OWNER
     //////////////////////////////////////////////////////////////*/
 
-    function setCyberVault(address _cyberVault) external onlyOwner {
-        require(_cyberVault != address(0), "ZERO_ADDRESS");
-        cyberVault = _cyberVault;
-    }
-
-    function setOFT(address _oft) external onlyOwner {
-        require(_oft != address(0), "ZERO_ADDRESS");
-        oft = _oft;
+    function setBridgeRecipient(address _bridgeRecipient) external onlyOwner {
+        bridgeRecipient = _bridgeRecipient;
     }
 
     function setLockDuration(uint256 _lockDuration) external onlyOwner {

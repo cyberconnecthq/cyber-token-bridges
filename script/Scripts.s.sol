@@ -258,7 +258,7 @@ contract DeployWithdrawer is Script, DeploySetting {
                             bytes32(
                                 0xc384fa53f80665caf7bace52728ff6ec249baccd23763cbe58cd43b086ac6925
                             ), // merkle root
-                            deployParams[DeploySetting.CYBER_TESTNET].eid // layerzero id
+                            deployParams[block.chainid].protocolOwner // bridge recipient
                         )
                     ),
                     LibDeploy.SALT
@@ -279,9 +279,7 @@ contract ConfigWithdrawer is Script, DeploySetting {
 
         if (block.chainid == DeploySetting.BNBT) {
             LaunchTokenWithdrawer(deployParams[block.chainid].withdrawer)
-                .setCyberVault(deployParams[CYBER_TESTNET].cyberVault);
-            LaunchTokenWithdrawer(deployParams[block.chainid].withdrawer)
-                .setOFT(deployParams[block.chainid].lzController);
+                .setLockDuration(5 minutes);
         } else {
             revert("NOT_SUPPORTED_CHAIN_ID");
         }
@@ -303,25 +301,14 @@ contract TestBridgeAndStake is Script, DeploySetting {
             merkleProof[1] = bytes32(
                 0xe7b5a97720b58f02fc30a748f545603cb455138f10c7c5470e492b9c88f5c25c
             );
-            MessagingFee memory msgFee = LaunchTokenWithdrawer(
-                deployParams[block.chainid].withdrawer
-            ).quoteBridge(
+
+            LaunchTokenWithdrawer(deployParams[block.chainid].withdrawer)
+                .bridgeAndStake(
                     0,
                     0x0e0bE581B17684f849AF6964D731FCe0F7d366BD,
                     1,
-                    merkleProof,
-                    200000
+                    merkleProof
                 );
-
-            LaunchTokenWithdrawer(deployParams[block.chainid].withdrawer)
-                .bridge{ value: msgFee.nativeFee }(
-                0,
-                0x0e0bE581B17684f849AF6964D731FCe0F7d366BD,
-                1,
-                merkleProof,
-                msgFee,
-                200000
-            );
         } else {
             revert("NOT_SUPPORTED_CHAIN_ID");
         }
