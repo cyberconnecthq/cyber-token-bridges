@@ -238,7 +238,14 @@ contract CyberVault is
         if (protocolFeeAmount == 0) {
             return;
         }
-        deposit(protocolFeeAmount, protocolFeeTreasury);
+        uint256 shares = previewDeposit(protocolFeeAmount);
+        _mint(protocolFeeTreasury, shares);
+        emit Deposit(
+            address(this),
+            protocolFeeTreasury,
+            protocolFeeAmount,
+            shares
+        );
         emit CollectFee(protocolFeeAmount, protocolFeeTreasury);
     }
 
