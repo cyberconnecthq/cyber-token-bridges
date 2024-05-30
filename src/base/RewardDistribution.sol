@@ -5,7 +5,7 @@ pragma solidity ^0.8.22;
 import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-import { IRewardDistribution, DistributionData } from "./interfaces/IRewardDistribution.sol";
+import { IRewardDistribution, DistributionData } from "../interfaces/IRewardDistribution.sol";
 
 /// @dev Accounting contract to manage staking distributions
 /// This is adapted from https://etherscan.io/address/0xedbaee53b410d2c59f1b73144e8d500e94b496a0#code

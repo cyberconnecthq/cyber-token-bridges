@@ -10,7 +10,7 @@ import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/cry
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-import { RewardDistribution } from "./RewardDistribution.sol";
+import { RewardDistribution } from "./base/RewardDistribution.sol";
 
 import { ICyberStakingPool, LockAmount } from "./interfaces/ICyberStakingPool.sol";
 
