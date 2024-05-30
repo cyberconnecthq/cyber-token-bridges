@@ -4,7 +4,7 @@ pragma solidity ^0.8.22;
 
 import { Test, console } from "forge-std/Test.sol";
 import { MockCyberToken } from "./utils/MockCyberToken.sol";
-import { CyberStakingPool } from "../src/CyberStakingPool.sol";
+import { CyberStakingPool, LockAmount } from "../src/CyberStakingPool.sol";
 import { DataTypes } from "../src/libraries/DataTypes.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
@@ -16,9 +16,11 @@ contract CyberStakingPoolTest is Test {
     address lzEndpoint = address(2);
     address alice = address(4);
     address bob = address(5);
+    uint16 distributionId = 1;
 
     function setUp() public {
         cyberToken = new MockCyberToken();
+        
 
         address cyberStakingPoolImpl = address(new CyberStakingPool());
 
@@ -41,25 +43,59 @@ contract CyberStakingPoolTest is Test {
         cyberToken.mint(alice, amount);
         cyberToken.approve(address(cyberStakingPool), amount);
 
-        cyberStakingPool.stake(amount);
+        vm.expectRevert("ZERO_AMOUNT");
+        cyberStakingPool.stake(0);
 
+        vm.expectRevert("MINIMAL_STAKE_AMOUNT_NOT_REACHED");
+        cyberStakingPool.stake(1);
+
+        cyberStakingPool.stake(amount);
         assertEq(
             cyberToken.balanceOf(address(cyberStakingPool)),
             amount,
             "ERR1"
         );
         assertEq(cyberStakingPool.balanceOf(alice), amount, "ERR2");
+        assertEq(cyberToken.balanceOf(alice), 0);
+    }
+
+    function testUnstake() public {
+        uint256 amount = 1000 ether;
+        vm.startPrank(alice);
+        bytes32 key = bytes32(uint256(uint160(alice)));
+        vm.expectRevert("ZERO_AMOUNT");
+        cyberStakingPool.unstake(0, key);
+
+        vm.expectRevert("INSUFFICIENT_BALANCE");
+        cyberStakingPool.unstake(1, key);
+
+        cyberToken.mint(alice, amount);
+        cyberToken.approve(address(cyberStakingPool), amount);
+        cyberStakingPool.stake(amount);
+        vm.expectRevert("INSUFFICIENT_BALANCE");
+        cyberStakingPool.unstake(amount + 1, key);
+
+        cyberStakingPool.unstake(amount, key);
+        assertEq(cyberStakingPool.balanceOf(alice), 0);
+        assertEq(cyberStakingPool.balanceOf(address(cyberStakingPool)), amount);
+        assertEq(cyberStakingPool.totalLockedAmount(alice), amount);
     }
 
     function testWithdraw() public {
         uint256 amount = 1000 ether;
         vm.startPrank(alice);
+        bytes32 key = bytes32(uint256(uint160(alice)));
+
+        vm.expectRevert("NOT_AVAILABLE_TO_WITHDRAW");
+        cyberStakingPool.withdraw(key);
+
         cyberToken.mint(alice, amount);
         cyberToken.approve(address(cyberStakingPool), amount);
-
         cyberStakingPool.stake(amount);
 
-        bytes32 key = bytes32(uint256(uint160(alice)));
+        vm.expectRevert("NOT_AVAILABLE_TO_WITHDRAW");
+        cyberStakingPool.withdraw(key);
+
         cyberStakingPool.unstake(amount, key);
 
         vm.expectRevert("LOCKED_PERIOD_NOT_ENDED");
@@ -68,8 +104,10 @@ contract CyberStakingPoolTest is Test {
         vm.warp(block.timestamp + cyberStakingPool.lockDuration());
 
         cyberStakingPool.withdraw(key);
+        assertEq(cyberStakingPool.totalLockedAmount(alice), 0, "ERR2");
         assertEq(cyberToken.balanceOf(alice), amount, "ERR3");
         assertEq(cyberStakingPool.balanceOf(alice), 0, "ERR4");
+        assertEq(cyberStakingPool.balanceOf(address(cyberStakingPool)), 0, "ERR5");
     }
 
     function testTransfer() public {
@@ -84,7 +122,64 @@ contract CyberStakingPoolTest is Test {
         cyberStakingPool.transfer(bob, amount);
     }
 
-    function testRewards() public {
+    function testRewardBalance() public {
+        uint256 amount = 2000 ether;
+        vm.startPrank(owner);
+        
+        vm.warp(block.timestamp);
+        uint256 rewards = 10000 ether;
+        uint256 start = block.timestamp + 1 days;
+        uint256 end = start + 1e22 seconds;
+        uint128 emissionPerSecond = uint128(rewards / (end - start));
+        cyberStakingPool.createDistribution(emissionPerSecond, uint40(start), uint40(end), cyberToken);
+
+        cyberToken.mint(owner, amount);
+        cyberToken.approve(address(cyberStakingPool), amount);
+        cyberStakingPool.stake(amount/2);
+        
+        assertEq(cyberStakingPool.rewardBalance(distributionId, owner), 0, "ERR1");
+
+        vm.warp(start + 1000 seconds);
+        uint256 accruedRewards = 1000;
+        bytes32 key = bytes32(uint256(uint160(owner)));
+        cyberStakingPool.unstake(amount/2, key);
+        assertEq(cyberStakingPool.rewardBalance(distributionId, owner), accruedRewards, "ERR2");
+
+        vm.warp(start + 2000 seconds);
+        cyberStakingPool.stake(amount/2);
+        console.log(cyberStakingPool.rewardBalance(distributionId, owner));
+        assertEq(cyberStakingPool.rewardBalance(distributionId, owner), accruedRewards, "ERR2");
+    }
+
+    function testGetLockedAmountByKey() public {
+        uint256 amount = 1000 ether;
+        vm.startPrank(alice);
+        bytes32 key = bytes32(uint256(uint160(alice)));
+
+        cyberToken.mint(alice, amount);
+        cyberToken.approve(address(cyberStakingPool), amount);
+        cyberStakingPool.stake(amount);
+        cyberStakingPool.unstake(amount, key);
+
+        LockAmount memory lockAmount = cyberStakingPool.getLockedAmountByKey(alice, key);
+        assertEq(lockAmount.lockEnd, block.timestamp + 7 days);
+        assertEq(lockAmount.amount, amount);
+    }
+
+    function testTotalLockedAmount() public {
+        uint256 amount = 1000 ether;
+        vm.startPrank(alice);
+        bytes32 key = bytes32(uint256(uint160(alice)));
+
+        cyberToken.mint(alice, amount);
+        cyberToken.approve(address(cyberStakingPool), amount);
+        cyberStakingPool.stake(amount);
+        cyberStakingPool.unstake(amount, key);
+
+        assertEq(cyberStakingPool.totalLockedAmount(alice), amount);
+    }
+
+    function testClaimAllRewards() public {
         uint256 rewards = 500000 ether;
         uint40 startTs = 1718323200;
         uint40 endTs = 1725753600;
