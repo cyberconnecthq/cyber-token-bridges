@@ -83,4 +83,37 @@ contract CyberStakingPoolTest is Test {
         vm.expectRevert("TRANSFER_PAUSED");
         cyberStakingPool.transfer(bob, amount);
     }
+
+    function testRewards() public {
+        uint256 rewards = 500000 ether;
+        uint40 startTs = 1718323200;
+        uint40 endTs = 1725753600;
+
+        uint128 emissionPerSecond = uint128(rewards / (endTs - startTs));
+        vm.warp(uint256(startTs - 1));
+        vm.startPrank(owner);
+        cyberStakingPool.createDistribution(
+            emissionPerSecond,
+            startTs,
+            endTs,
+            cyberToken
+        );
+        cyberToken.mint(address(cyberStakingPool), rewards);
+
+        uint256 expectedOneDayRewards = emissionPerSecond * 1 days;
+        vm.startPrank(alice);
+        uint256 stakeAmount = cyberStakingPool.minimalStakeAmount();
+        cyberToken.mint(alice, stakeAmount);
+        cyberToken.approve(address(cyberStakingPool), stakeAmount);
+
+        cyberStakingPool.stake(stakeAmount);
+        console.log("rewards");
+        console.log(cyberStakingPool.claimAllRewards());
+
+        vm.warp(block.timestamp + 1 days);
+        // stCYBER still exists, totalSupply is not influenced
+        cyberStakingPool.unstake(stakeAmount, bytes32(uint256(uint160(alice))));
+        uint256 totalRewards = cyberStakingPool.claimAllRewards();
+        assertTrue(expectedOneDayRewards - totalRewards < 1e17, "ERR1");
+    }
 }

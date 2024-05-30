@@ -82,7 +82,8 @@ contract CyberStakingPool is
         internal _lockedAmountByKey;
     /// hash(distribution id, user) => rewardsBalance
     mapping(bytes32 => uint256) private _rewardsBalances;
-    mapping(address => uint256) public lockedAmounts;
+    mapping(address => uint256) private _lockedAmounts;
+    uint256 public protocolLockedAmount;
 
     // Log ID for each event
     uint256 private _logId;
@@ -200,7 +201,8 @@ contract CyberStakingPool is
 
         _transfer(msg.sender, address(this), _amount);
 
-        lockedAmounts[msg.sender] += _amount;
+        _lockedAmounts[msg.sender] += _amount;
+        protocolLockedAmount += _amount;
         LockAmount memory lockAmount = _lockedAmountByKey[msg.sender][_key];
         lockAmount.amount += _amount;
         lockAmount.lockEnd = block.timestamp + lockDuration;
@@ -225,7 +227,8 @@ contract CyberStakingPool is
         );
         delete _lockedAmountByKey[msg.sender][_key];
         _burn(address(this), lockAmount.amount);
-        lockedAmounts[msg.sender] -= lockAmount.amount;
+        _lockedAmounts[msg.sender] -= lockAmount.amount;
+        protocolLockedAmount -= lockAmount.amount;
 
         cyber.safeTransfer(msg.sender, lockAmount.amount);
         emit Withdraw(_logId++, msg.sender, lockAmount.amount, _key);
@@ -264,7 +267,11 @@ contract CyberStakingPool is
     function totalLockedAmount(
         address user
     ) external view override returns (uint256) {
-        return lockedAmounts[user];
+        return _lockedAmounts[user];
+    }
+
+    function circulatingSupply() public view returns (uint256) {
+        return totalSupply() - protocolLockedAmount;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -348,7 +355,7 @@ contract CyberStakingPool is
                 distributionId,
                 user,
                 stakedByUser,
-                totalSupply()
+                circulatingSupply()
             );
             if (accruedRewards != 0) {
                 bytes32 key = rewardBalanceKey(distributionId, user);
