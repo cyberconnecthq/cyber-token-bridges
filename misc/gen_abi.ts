@@ -8,6 +8,7 @@ const writeAbi = async () => {
     "CyberTokenAdapter.sol/CyberTokenAdapter.json",
     "CyberTokenController.sol/CyberTokenController.json",
     "LaunchTokenWithdrawer.sol/LaunchTokenWithdrawer.json",
+    "RewardTokenWithdrawer.sol/RewardTokenWithdrawer.json",
   ];
   const ps = folders.map(async (file) => {
     const f = await fs.readFile(path.join("./out", file), "utf8");
