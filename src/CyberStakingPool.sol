@@ -82,7 +82,7 @@ contract CyberStakingPool is
         internal _lockedAmountByKey;
     /// hash(distribution id, user) => rewardsBalance
     mapping(bytes32 => uint256) private _rewardsBalances;
-    mapping(address => uint256) private _lockedAmounts;
+    mapping(address => uint256) private _lockedAmountByUser;
     uint256 public protocolLockedAmount;
 
     // Log ID for each event
@@ -201,7 +201,7 @@ contract CyberStakingPool is
 
         _transfer(msg.sender, address(this), _amount);
 
-        _lockedAmounts[msg.sender] += _amount;
+        _lockedAmountByUser[msg.sender] += _amount;
         protocolLockedAmount += _amount;
         LockAmount memory lockAmount = _lockedAmountByKey[msg.sender][_key];
         lockAmount.amount += _amount;
@@ -227,7 +227,7 @@ contract CyberStakingPool is
         );
         delete _lockedAmountByKey[msg.sender][_key];
         _burn(address(this), lockAmount.amount);
-        _lockedAmounts[msg.sender] -= lockAmount.amount;
+        _lockedAmountByUser[msg.sender] -= lockAmount.amount;
         protocolLockedAmount -= lockAmount.amount;
 
         cyber.safeTransfer(msg.sender, lockAmount.amount);
@@ -264,10 +264,10 @@ contract CyberStakingPool is
         return _lockedAmountByKey[user][key];
     }
 
-    function totalLockedAmount(
+    function lockedAmountByUser(
         address user
     ) external view override returns (uint256) {
-        return _lockedAmounts[user];
+        return _lockedAmountByUser[user];
     }
 
     function circulatingSupply() public view returns (uint256) {

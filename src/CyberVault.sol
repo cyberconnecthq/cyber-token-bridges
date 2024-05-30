@@ -99,7 +99,7 @@ contract CyberVault is
     function totalAssets() public view override returns (uint256) {
         return
             cyberStakingPool.balanceOf(address(this)) +
-            cyberStakingPool.totalLockedAmount(address(this)) +
+            cyberStakingPool.lockedAmountByUser(address(this)) +
             IERC20(asset()).balanceOf(address(this));
     }
 
