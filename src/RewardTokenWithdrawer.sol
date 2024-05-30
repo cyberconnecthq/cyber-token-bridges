@@ -69,4 +69,17 @@ contract RewardTokenWithdrawer is MerkleDistribution, Ownable {
         IERC4626(cyberVault).deposit(amount, account);
         emit Stake(_logId++, account, amount);
     }
+
+    /*//////////////////////////////////////////////////////////////
+                            ONLY OWNER
+    //////////////////////////////////////////////////////////////*/
+
+    function rescueToken(address token, uint256 amount) external onlyOwner {
+        if (token == address(0)) {
+            (bool success, ) = owner().call{ value: amount }("");
+            require(success, "WITHDRAW_FAILED");
+        } else {
+            IERC20(token).safeTransfer(owner(), amount);
+        }
+    }
 }
