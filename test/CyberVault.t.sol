@@ -128,5 +128,15 @@ contract CyberVaultTest is Test {
         console.log(cyberVault.totalSupply());
     }
 
-    function testTransfer() public {}
+    function testTransfer() public {
+        uint256 amount = 1 ether;
+        vm.startPrank(alice);
+        cyberToken.mint(alice, amount);
+        cyberToken.approve(address(cyberVault), amount);
+        cyberVault.deposit(amount, alice);
+
+        cyberVault.transfer(bob, amount / 2);
+        assertEq(cyberVault.balanceOf(alice), amount / 2);
+        assertEq(cyberVault.balanceOf(bob), amount / 2);
+    }
 }

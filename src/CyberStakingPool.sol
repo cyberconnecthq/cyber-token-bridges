@@ -322,10 +322,6 @@ contract CyberStakingPool is
                             PRIVATE
     //////////////////////////////////////////////////////////////*/
 
-    function _min(uint256 x, uint256 y) private pure returns (uint256) {
-        return x <= y ? x : y;
-    }
-
     function _claimReward(uint16 distributionId) private returns (uint256) {
         bytes32 key = rewardBalanceKey(distributionId, msg.sender);
         uint256 unclaimedRewards = _rewardsBalances[key];
