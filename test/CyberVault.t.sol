@@ -72,6 +72,9 @@ contract CyberVaultTest is Test {
             "ERR1"
         );
         assertEq(cyberVault.balanceOf(alice), amount, "ERR2");
+
+        vm.expectRevert();
+        cyberVault.deposit(type(uint256).max + 1, alice);
     }
 
     function testWithdraw() public {
@@ -137,5 +140,120 @@ contract CyberVaultTest is Test {
         cyberVault.transfer(bob, amount / 2);
         assertEq(cyberVault.balanceOf(alice), amount / 2);
         assertEq(cyberVault.balanceOf(bob), amount / 2);
+    }
+
+    function testInitiateRedeem() public {
+        uint256 amount = cyberStakingPool.minimalStakeAmount();
+        
+        vm.startPrank(owner);
+        vm.warp(block.timestamp);
+        uint256 rewards = 10000 ether;
+        uint256 start = block.timestamp + 1 days;
+        uint256 end = start + 1e22 seconds;
+        uint128 emissionPerSecond = uint128(rewards / (end - start));
+        cyberStakingPool.createDistribution(
+            emissionPerSecond,
+            uint40(start),
+            uint40(end),
+            cyberToken
+        );
+
+        cyberToken.mint(owner, amount);
+        cyberToken.approve(address(cyberVault), amount);
+        cyberVault.deposit(amount, owner);
+        assertEq(cyberStakingPool.balanceOf(address(cyberVault)), amount, "ERR2");
+
+        vm.warp(start + 1 days);
+        uint256 shares = cyberVault.balanceOf(owner);
+        cyberVault.initiateRedeem(shares / 2);
+        assertEq(cyberVault.balanceOf(address(cyberVault)), shares / 2);
+        assertEq(cyberVault.balanceOf(owner), shares / 2);
+        assertNotEq(cyberVault.balanceOf(treasury), 0);
+        assertLt(cyberStakingPool.balanceOf(address(cyberVault)), amount/2);
+        assertGt(cyberStakingPool.balanceOf(address(cyberStakingPool)), amount/2);
+        assertGt(cyberStakingPool.lockedAmountByUser(address(cyberVault)), amount/2);
+    }
+
+    function testInitiateWithdraw() public {
+        uint256 amount = cyberStakingPool.minimalStakeAmount();
+        
+        vm.startPrank(owner);
+        vm.warp(block.timestamp);
+        uint256 rewards = 10000 ether;
+        uint256 start = block.timestamp + 1 days;
+        uint256 end = start + 1e22 seconds;
+        uint128 emissionPerSecond = uint128(rewards / (end - start));
+        cyberStakingPool.createDistribution(
+            emissionPerSecond,
+            uint40(start),
+            uint40(end),
+            cyberToken
+        );
+
+        cyberToken.mint(owner, amount);
+        cyberToken.approve(address(cyberVault), amount);
+        cyberVault.deposit(amount, owner);
+        assertEq(cyberStakingPool.balanceOf(address(cyberVault)), amount, "ERR2");
+
+        vm.warp(start + 1 days);
+        uint256 shares = cyberVault.balanceOf(owner);
+        cyberVault.initiateWithdraw(amount / 2);
+        assertLt(cyberVault.balanceOf(address(cyberVault)), shares / 2);
+        assertGt(cyberVault.balanceOf(owner), shares / 2);
+        assertNotEq(cyberVault.balanceOf(treasury), 0);
+        assertEq(cyberStakingPool.balanceOf(address(cyberVault)), amount/2);
+        assertEq(cyberStakingPool.balanceOf(address(cyberStakingPool)), amount/2);
+        assertEq(cyberStakingPool.lockedAmountByUser(address(cyberVault)), amount/2);
+    }
+
+    function testRedeem() public {
+        uint256 amount = cyberStakingPool.minimalStakeAmount();
+        vm.startPrank(alice);
+        vm.warp(block.timestamp);
+
+        cyberToken.mint(alice, amount);
+        cyberToken.approve(address(cyberVault), amount);
+        cyberVault.deposit(amount, alice);
+
+        uint256 shares = cyberVault.balanceOf(alice);
+        cyberVault.initiateRedeem(shares / 2);
+
+        vm.expectRevert("INVALID_SHARES");
+        cyberVault.redeem(shares, alice, alice);
+
+        vm.warp(block.timestamp + 1 days);
+        vm.expectRevert("LOCKED_PERIOD_NOT_ENDED");
+        cyberVault.redeem(shares / 2, alice, alice);
+
+        vm.warp(block.timestamp + 8 days);
+        cyberVault.redeem(shares / 2, alice, alice);
+        assertLt(cyberVault.balanceOf(address(cyberVault)), shares);
+        assertGt(cyberToken.balanceOf(alice), 0);
+    }
+
+    function testClaimAndStake() public {
+        uint256 amount = cyberStakingPool.minimalStakeAmount();
+        vm.startPrank(owner);
+        vm.warp(block.timestamp);
+        uint256 rewards = 10000 ether;
+        uint256 start = block.timestamp + 1 days;
+        uint256 end = start + 1e22 seconds;
+        uint128 emissionPerSecond = uint128(rewards / (end - start));
+        cyberStakingPool.createDistribution(
+            emissionPerSecond,
+            uint40(start),
+            uint40(end),
+            cyberToken
+        );
+
+        cyberToken.mint(owner, amount);
+        cyberToken.approve(address(cyberVault), amount);
+        cyberVault.deposit(amount, owner);
+
+        vm.warp(block.timestamp + 8 days);
+        uint256 oldBlance = cyberStakingPool.balanceOf(address(cyberVault));
+        cyberToken.mint(owner, amount);
+        cyberVault.claimAndStake();
+        assertGt(cyberStakingPool.balanceOf(address(cyberVault)), oldBlance);
     }
 }

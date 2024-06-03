@@ -189,7 +189,7 @@ contract CyberStakingPoolTest is Test {
         assertEq(lockAmount.amount, amount);
     }
 
-    function testTotalLockedAmount() public {
+    function testLockedAmountByUser() public {
         uint256 amount = 1000 ether;
         vm.startPrank(alice);
         bytes32 key = bytes32(uint256(uint160(alice)));

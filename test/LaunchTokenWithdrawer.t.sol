@@ -63,26 +63,21 @@ contract LaunchTokenWithdrawerTest is Test {
         assertEq(cyberToken.balanceOf(address(launchTokenWithdrawer)), 0);
     }
 
-    function testBridge() public {
-        vm.startPrank(owner);
+    function testBridgeAndStake() public {
+        vm.startPrank(alice);
 
         uint256 amount = 100;
         cyberToken.mint(address(launchTokenWithdrawer), amount);
         assertEq(cyberToken.balanceOf(address(launchTokenWithdrawer)), amount);
 
         bytes32[] memory merkleProof = new bytes32[](0);
+
         uint256 index = 0;
+        vm.expectRevert("INVALID_PROOF");
+        launchTokenWithdrawer.bridgeAndStake(index, bob, amount, merkleProof);
 
-        // MessagingFee memory fee = launchTokenWithdrawer.quoteBridge(index, alice, amount, merkleProof, 210000);
-
-        // vm.expectRevert("INVALID_PROOF");
-        // launchTokenWithdrawer.bridge(index, bob, amount, merkleProof, fee, 210000);
-
-        // launchTokenWithdrawer.bridge(index, alice, amount, merkleProof, fee, 210000);
-        // assertEq(cyberToken.balanceOf(alice), 0);
-
-        // launchTokenWithdrawer.initiateWithdraw(index, alice, amount, merkleProof);
-        // vm.expectRevert("ALREADY_CLAIMED");
-        // launchTokenWithdrawer.bridge(index, alice, amount, merkleProof, fee, 210000);
+        launchTokenWithdrawer.bridgeAndStake(index, alice, amount, merkleProof);
+        assertEq(cyberToken.balanceOf(alice), 0);
+        assertEq(cyberToken.balanceOf(address(bridgeRecipient)), amount);
     }
 }
