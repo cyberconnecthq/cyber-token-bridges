@@ -250,6 +250,16 @@ contract CyberVault is
         stake();
     }
 
+    function batchDeposit(
+        uint256[] calldata assets,
+        address[] calldata receivers
+    ) external {
+        require(assets.length == receivers.length, "INVALID_LENGTH");
+        for (uint256 i = 0; i < assets.length; i++) {
+            deposit(assets[i], receivers[i]);
+        }
+    }
+
     /*//////////////////////////////////////////////////////////////
                             ONLY OWNER
     //////////////////////////////////////////////////////////////*/

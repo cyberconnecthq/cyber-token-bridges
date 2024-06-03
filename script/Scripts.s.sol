@@ -442,10 +442,20 @@ contract ConfigCyberStakingPool is Script, DeploySetting {
         vm.startBroadcast();
 
         if (block.chainid == DeploySetting.CYBER_TESTNET) {
+            // CyberStakingPool(deployParams[block.chainid].cyberStakingPool)
+            //     .setLockDuration(5 minutes);
+            // CyberStakingPool(deployParams[block.chainid].cyberStakingPool)
+            //     .setMinimalStakeAmount(1 ether);
+            uint256 totalRewards = 500000 ether;
+            uint256 startTime = 1717401600;
+            uint256 endTime = 1717401600 + 90 days;
             CyberStakingPool(deployParams[block.chainid].cyberStakingPool)
-                .setLockDuration(5 minutes);
-            CyberStakingPool(deployParams[block.chainid].cyberStakingPool)
-                .setMinimalStakeAmount(1 ether);
+                .createDistribution(
+                    uint128(totalRewards / 90 days),
+                    uint40(startTime),
+                    uint40(endTime),
+                    IERC20(deployParams[block.chainid].cyberToken)
+                );
         } else {
             revert("NOT_SUPPORTED_CHAIN_ID");
         }
