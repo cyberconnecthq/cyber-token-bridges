@@ -20,7 +20,6 @@ contract CyberStakingPoolTest is Test {
 
     function setUp() public {
         cyberToken = new MockCyberToken();
-        
 
         address cyberStakingPoolImpl = address(new CyberStakingPool());
 
@@ -78,7 +77,7 @@ contract CyberStakingPoolTest is Test {
         cyberStakingPool.unstake(amount, key);
         assertEq(cyberStakingPool.balanceOf(alice), 0);
         assertEq(cyberStakingPool.balanceOf(address(cyberStakingPool)), amount);
-        assertEq(cyberStakingPool.totalLockedAmount(alice), amount);
+        assertEq(cyberStakingPool.lockedAmountByUser(alice), amount);
     }
 
     function testWithdraw() public {
@@ -104,10 +103,14 @@ contract CyberStakingPoolTest is Test {
         vm.warp(block.timestamp + cyberStakingPool.lockDuration());
 
         cyberStakingPool.withdraw(key);
-        assertEq(cyberStakingPool.totalLockedAmount(alice), 0, "ERR2");
+        assertEq(cyberStakingPool.lockedAmountByUser(alice), 0, "ERR2");
         assertEq(cyberToken.balanceOf(alice), amount, "ERR3");
         assertEq(cyberStakingPool.balanceOf(alice), 0, "ERR4");
-        assertEq(cyberStakingPool.balanceOf(address(cyberStakingPool)), 0, "ERR5");
+        assertEq(
+            cyberStakingPool.balanceOf(address(cyberStakingPool)),
+            0,
+            "ERR5"
+        );
     }
 
     function testTransfer() public {
@@ -125,30 +128,47 @@ contract CyberStakingPoolTest is Test {
     function testRewardBalance() public {
         uint256 amount = 2000 ether;
         vm.startPrank(owner);
-        
+
         vm.warp(block.timestamp);
         uint256 rewards = 10000 ether;
         uint256 start = block.timestamp + 1 days;
         uint256 end = start + 1e22 seconds;
         uint128 emissionPerSecond = uint128(rewards / (end - start));
-        cyberStakingPool.createDistribution(emissionPerSecond, uint40(start), uint40(end), cyberToken);
+        cyberStakingPool.createDistribution(
+            emissionPerSecond,
+            uint40(start),
+            uint40(end),
+            cyberToken
+        );
 
         cyberToken.mint(owner, amount);
         cyberToken.approve(address(cyberStakingPool), amount);
-        cyberStakingPool.stake(amount/2);
-        
-        assertEq(cyberStakingPool.rewardBalance(distributionId, owner), 0, "ERR1");
+        cyberStakingPool.stake(amount / 2);
+
+        assertEq(
+            cyberStakingPool.rewardBalance(distributionId, owner),
+            0,
+            "ERR1"
+        );
 
         vm.warp(start + 1000 seconds);
         uint256 accruedRewards = 1000;
         bytes32 key = bytes32(uint256(uint160(owner)));
-        cyberStakingPool.unstake(amount/2, key);
-        assertEq(cyberStakingPool.rewardBalance(distributionId, owner), accruedRewards, "ERR2");
+        cyberStakingPool.unstake(amount / 2, key);
+        assertEq(
+            cyberStakingPool.rewardBalance(distributionId, owner),
+            accruedRewards,
+            "ERR2"
+        );
 
         vm.warp(start + 2000 seconds);
-        cyberStakingPool.stake(amount/2);
+        cyberStakingPool.stake(amount / 2);
         console.log(cyberStakingPool.rewardBalance(distributionId, owner));
-        assertEq(cyberStakingPool.rewardBalance(distributionId, owner), accruedRewards, "ERR2");
+        assertEq(
+            cyberStakingPool.rewardBalance(distributionId, owner),
+            accruedRewards,
+            "ERR2"
+        );
     }
 
     function testGetLockedAmountByKey() public {
@@ -161,7 +181,10 @@ contract CyberStakingPoolTest is Test {
         cyberStakingPool.stake(amount);
         cyberStakingPool.unstake(amount, key);
 
-        LockAmount memory lockAmount = cyberStakingPool.getLockedAmountByKey(alice, key);
+        LockAmount memory lockAmount = cyberStakingPool.getLockedAmountByKey(
+            alice,
+            key
+        );
         assertEq(lockAmount.lockEnd, block.timestamp + 7 days);
         assertEq(lockAmount.amount, amount);
     }
@@ -176,7 +199,7 @@ contract CyberStakingPoolTest is Test {
         cyberStakingPool.stake(amount);
         cyberStakingPool.unstake(amount, key);
 
-        assertEq(cyberStakingPool.totalLockedAmount(alice), amount);
+        assertEq(cyberStakingPool.lockedAmountByUser(alice), amount);
     }
 
     function testClaimAllRewards() public {

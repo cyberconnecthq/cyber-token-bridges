@@ -184,13 +184,14 @@ contract TestBridge is Script, DeploySetting {
 
         if (
             block.chainid == DeploySetting.SEPOLIA ||
-            block.chainid == DeploySetting.CYBER_TESTNET
+            block.chainid == DeploySetting.CYBER_TESTNET ||
+            block.chainid == DeploySetting.BNBT
         ) {
             DeployParameters memory fromChainParams = deployParams[
                 block.chainid
             ];
             DeployParameters memory toChainParams = deployParams[
-                DeploySetting.SEPOLIA
+                DeploySetting.BNBT
             ];
 
             uint256 amountToBridge = 1 ether + 1 wei;

@@ -44,7 +44,6 @@ contract CyberVaultTest is Test {
                 abi.encodeWithSelector(
                     CyberVault.initialize.selector,
                     owner,
-                    lzEndpoint,
                     address(cyberToken),
                     address(cyberStakingPool),
                     treasury

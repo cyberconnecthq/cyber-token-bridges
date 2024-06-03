@@ -25,7 +25,7 @@
     "config_oapp:sepolia": "source .env.sepolia.owner && forge script script/Scripts.s.sol:ConfigOApp --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast --slow -vvv",
     "config_oapp:bnbt": "source .env.bnbt.owner && forge script script/Scripts.s.sol:ConfigOApp --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast --slow -vvv",
     "config_oapp:cyber_testnet": "source .env.cyber_testnet.owner && forge script script/Scripts.s.sol:ConfigOApp --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast --slow -vvv",
-    "bridge_test:sepolia": "source .env.sepolia && forge script script/Scripts.s.sol:TestBridge --rpc-url $RPC_URL --private-key $PRIVATE_KEY --slow -vvv  --broadcast",
+    "bridge_test:sepolia": "source .env.sepolia && forge script script/Scripts.s.sol:TestBridge --rpc-url $RPC_URL --private-key $PRIVATE_KEY --slow -vvv --legacy  --broadcast",
     "bridge_test:bnbt": "source .env.bnbt && forge script script/Scripts.s.sol:TestBridge --rpc-url $RPC_URL --private-key $PRIVATE_KEY --slow -vvv  --broadcast",
     "bridge_test:cyber_testnet": "source .env.cyber_testnet && forge script script/Scripts.s.sol:TestBridge --rpc-url $RPC_URL --private-key $PRIVATE_KEY --slow -vvv  --broadcast",
     "transfer_token_owner:bnbt": "source .env.bnbt.owner && forge script script/Scripts.s.sol:TransferTokenOwner --rpc-url $RPC_URL --private-key $PRIVATE_KEY --slow -vvv --broadcast",
