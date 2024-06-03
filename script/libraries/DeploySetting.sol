@@ -58,7 +58,7 @@ contract DeploySetting {
                 .lzController = 0xD610b93C19e87b7C3039bc8DA906a233aD85386b;
             deployParams[BNBT].eid = 40102;
             deployParams[BNBT]
-                .withdrawer = 0xefb3F5f64Bd860a1bFde7897918d8e668dCab7B1;
+                .withdrawer = 0x184e76012B53C8a26784845A501F3fc7b4293b8f;
         }
 
         {
@@ -79,6 +79,8 @@ contract DeploySetting {
                 .cyberVault = 0x7AB9C2255BF99de0c5C022AcA4F8C2DeD147EF7E;
             deployParams[CYBER_TESTNET]
                 .treasury = 0x7884f7F04F994da14302a16Cf15E597e31eebECf;
+            deployParams[CYBER_TESTNET]
+                .withdrawer = 0xbCa654C538Db982D4B1414eD1627CeB1d3776Dd8;
         }
 
         {

@@ -10,6 +10,7 @@ import { CyberTokenController } from "../src/CyberTokenController.sol";
 import { CyberStakingPool } from "../src/CyberStakingPool.sol";
 import { CyberVault } from "../src/CyberVault.sol";
 import { LaunchTokenWithdrawer } from "../src/LaunchTokenWithdrawer.sol";
+import { RewardTokenWithdrawer } from "../src/RewardTokenWithdrawer.sol";
 
 import "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 import "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFTCore.sol";
@@ -256,7 +257,7 @@ contract DeployWithdrawer is Script, DeploySetting {
                             deployParams[block.chainid].protocolOwner, // owner
                             deployParams[block.chainid].cyberToken, // cyber token
                             bytes32(
-                                0xc384fa53f80665caf7bace52728ff6ec249baccd23763cbe58cd43b086ac6925
+                                0x67402f14c1900edbbb1c1afafbf3611bb617ca25e94ad9880f5e71d5a60d6b55
                             ), // merkle root
                             deployParams[block.chainid].protocolOwner // bridge recipient
                         )
@@ -264,6 +265,24 @@ contract DeployWithdrawer is Script, DeploySetting {
                     LibDeploy.SALT
                 );
             LibDeploy._write(vm, "LaunchTokenWithdrawer", withdrawer);
+        } else if (block.chainid == DeploySetting.CYBER_TESTNET) {
+            address withdrawer = Create2Deployer(
+                deployParams[block.chainid].deployerContract
+            ).deploy(
+                    abi.encodePacked(
+                        type(RewardTokenWithdrawer).creationCode,
+                        abi.encode(
+                            deployParams[block.chainid].protocolOwner, // owner
+                            deployParams[block.chainid].cyberToken, // cyber token
+                            deployParams[block.chainid].cyberVault, // cyber vault
+                            bytes32(
+                                0xa54dbae6d2b0bb1541f2ad2ad5193ef646dec0474071abbcf6911717df84dce7
+                            ) // merkle root
+                        )
+                    ),
+                    LibDeploy.SALT
+                );
+            LibDeploy._write(vm, "RewardTokenWithdrawer", withdrawer);
         } else {
             revert("NOT_SUPPORTED_CHAIN_ID");
         }
