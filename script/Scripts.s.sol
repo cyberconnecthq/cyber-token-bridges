@@ -342,7 +342,6 @@ contract DeployCyberVault is Script, DeploySetting {
                             abi.encodeWithSelector(
                                 CyberVault.initialize.selector,
                                 deployParams[block.chainid].protocolOwner,
-                                deployParams[block.chainid].lzEndpoint,
                                 deployParams[block.chainid].cyberToken,
                                 deployParams[block.chainid].cyberStakingPool,
                                 deployParams[block.chainid].treasury
@@ -366,9 +365,6 @@ contract ConfigCyberVault is Script, DeploySetting {
         vm.startBroadcast();
 
         if (block.chainid == DeploySetting.CYBER_TESTNET) {
-            CyberVault(deployParams[block.chainid].cyberVault).setOApp(
-                deployParams[block.chainid].lzController
-            );
             CyberVault(deployParams[block.chainid].cyberVault).setLockDuration(
                 5 minutes
             );

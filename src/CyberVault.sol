@@ -56,9 +56,7 @@ contract CyberVault is
     uint256 public constant MAX_BPS = 1e4;
 
     ICyberStakingPool public cyberStakingPool;
-    address public lzEndpoint;
     uint256 public lockDuration;
-    address public oApp;
     uint256 public protocolFeeBps;
     address public protocolFeeTreasury;
     mapping(address => LockAmount) internal _lockAmounts;
@@ -73,7 +71,6 @@ contract CyberVault is
 
     function initialize(
         address _owner,
-        address _lzEndpoint,
         IERC20 _cyber,
         address _stakingPool,
         address _protocolFeeTreasury
@@ -84,7 +81,6 @@ contract CyberVault is
         __Ownable_init(_owner);
         __Pausable_init();
 
-        lzEndpoint = _lzEndpoint;
         protocolFeeTreasury = _protocolFeeTreasury;
         cyberStakingPool = ICyberStakingPool(_stakingPool);
         lockDuration = 7 days;
@@ -259,10 +255,6 @@ contract CyberVault is
     //////////////////////////////////////////////////////////////*/
     function setLockDuration(uint256 _lockDuration) external onlyOwner {
         lockDuration = _lockDuration;
-    }
-
-    function setOApp(address _oApp) external onlyOwner {
-        oApp = _oApp;
     }
 
     function setProtocolFeeBps(uint256 _protocolFeeBps) external onlyOwner {
