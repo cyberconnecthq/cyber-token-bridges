@@ -255,9 +255,20 @@ contract CyberVault is
         address[] calldata receivers
     ) external {
         require(assets.length == receivers.length, "INVALID_LENGTH");
+        uint256 totalDeposit = 0;
         for (uint256 i = 0; i < assets.length; i++) {
-            deposit(assets[i], receivers[i]);
+            require(assets[i] != 0, "ZERO_AMOUNT");
+            totalDeposit += assets[i];
+            uint256 shares = previewDeposit(assets[i]);
+            _mint(receivers[i], shares);
+            emit Deposit(msg.sender, receivers[i], assets[i], shares);
         }
+        IERC20(asset()).safeTransferFrom(
+            msg.sender,
+            address(this),
+            totalDeposit
+        );
+        stake();
     }
 
     /*//////////////////////////////////////////////////////////////
