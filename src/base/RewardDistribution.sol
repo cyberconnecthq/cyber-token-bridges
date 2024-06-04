@@ -152,6 +152,27 @@ abstract contract RewardDistribution is
     ) internal returns (uint256) {
         DistributionData storage distribution = distributions[distributionId];
 
+        uint256 newIndex = _previewUpdateDistribution(
+            distributionId,
+            totalStaked
+        );
+
+        if (newIndex != distribution.index) {
+            distribution.index = newIndex;
+            emit DistributionIndexUpdated(distributionId, newIndex);
+        }
+
+        distribution.updateTimestamp = uint40(block.timestamp);
+
+        return newIndex;
+    }
+
+    function _previewUpdateDistribution(
+        uint16 distributionId,
+        uint256 totalStaked
+    ) internal view returns (uint256) {
+        DistributionData storage distribution = distributions[distributionId];
+
         uint256 oldIndex = distribution.index;
         uint40 lastUpdateTimestamp = _lastUpdateTimestamp(distribution);
 
@@ -169,13 +190,6 @@ abstract contract RewardDistribution is
             lastUpdateTimestamp,
             totalStaked
         );
-
-        if (newIndex != oldIndex) {
-            distribution.index = newIndex;
-            emit DistributionIndexUpdated(distributionId, newIndex);
-        }
-
-        distribution.updateTimestamp = uint40(block.timestamp);
 
         return newIndex;
     }
@@ -213,6 +227,33 @@ abstract contract RewardDistribution is
 
         if (accruedRewards > 0) {
             accruedRewards = _collectFee(distributionId, accruedRewards);
+        }
+
+        return accruedRewards;
+    }
+
+    function _previewUpdateUser(
+        uint16 distributionId,
+        address user,
+        uint256 stakedByUser,
+        uint256 totalStaked
+    ) internal view returns (uint256) {
+        DistributionData storage distribution = distributions[distributionId];
+
+        uint256 newIndex = _previewUpdateDistribution(
+            distributionId,
+            totalStaked
+        );
+        uint256 userIndex = distribution.userIndices[user];
+
+        uint256 accruedRewards = 0;
+
+        if (userIndex != newIndex && stakedByUser != 0) {
+            accruedRewards = _getAccruedRewards(
+                stakedByUser,
+                newIndex,
+                userIndex
+            );
         }
 
         return accruedRewards;

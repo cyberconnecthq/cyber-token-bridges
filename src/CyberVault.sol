@@ -11,6 +11,7 @@ import { ERC4626Upgradeable, Math } from "@openzeppelin/contracts-upgradeable/to
 import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { ICyberStakingPool } from "./interfaces/ICyberStakingPool.sol";
 
@@ -32,6 +33,7 @@ contract CyberVault is
     UUPSUpgradeable
 {
     using SafeERC20 for IERC20;
+    using Math for uint256;
 
     /*//////////////////////////////////////////////////////////////
                             EVENT
@@ -96,7 +98,36 @@ contract CyberVault is
         return
             cyberStakingPool.balanceOf(address(this)) +
             cyberStakingPool.lockedAmountByUser(address(this)) +
+            cyberStakingPool.claimableAllRewards(address(this)) +
             IERC20(asset()).balanceOf(address(this));
+    }
+
+    /** @dev See {IERC4626-previewDeposit}. */
+    function previewDeposit(
+        uint256 assets
+    ) public view override returns (uint256) {
+        return _convertToShares(assets, Math.Rounding.Floor, true);
+    }
+
+    /** @dev See {IERC4626-previewMint}. */
+    function previewMint(
+        uint256 shares
+    ) public view override returns (uint256) {
+        return _convertToAssets(shares, Math.Rounding.Ceil, true);
+    }
+
+    /** @dev See {IERC4626-previewWithdraw}. */
+    function previewWithdraw(
+        uint256 assets
+    ) public view override returns (uint256) {
+        return _convertToShares(assets, Math.Rounding.Ceil, true);
+    }
+
+    /** @dev See {IERC4626-previewRedeem}. */
+    function previewRedeem(
+        uint256 shares
+    ) public view override returns (uint256) {
+        return _convertToAssets(shares, Math.Rounding.Floor, true);
     }
 
     /** @dev See {IERC4626-deposit}. */
@@ -105,7 +136,10 @@ contract CyberVault is
         address receiver
     ) public override returns (uint256) {
         claim();
-        uint256 shares = super.deposit(assets, receiver);
+        uint256 maxAssets = maxDeposit(receiver);
+        require(assets <= maxAssets, "EXCEED_MAX_DEPOSIT");
+        uint256 shares = _previewDepositInternal(assets);
+        _deposit(msg.sender, receiver, assets, shares);
         stake();
         return shares;
     }
@@ -116,7 +150,10 @@ contract CyberVault is
         address receiver
     ) public override returns (uint256) {
         claim();
-        uint256 assets = super.mint(shares, receiver);
+        uint256 maxShares = maxMint(receiver);
+        require(shares <= maxShares, "EXCEED_MAX_MINT");
+        uint256 assets = _previewMintInternal(shares);
+        _deposit(msg.sender, receiver, assets, shares);
         stake();
         return assets;
     }
@@ -208,19 +245,22 @@ contract CyberVault is
                             EXTERNAL 
     //////////////////////////////////////////////////////////////*/
 
-    function initiateRedeem(uint256 shares) external {
+    function initiateRedeem(uint256 shares) external returns (uint256) {
         claimAndStake();
         uint256 maxShares = maxRedeem(msg.sender);
         require(shares <= maxShares, "EXCEED_MAX_REDEEM");
-        _initiateWithdraw(shares);
+        uint256 assets = _previewRedeemInternal(shares);
+        _initiateWithdraw(shares, assets);
+        return assets;
     }
 
-    function initiateWithdraw(uint256 assets) external {
+    function initiateWithdraw(uint256 assets) external returns (uint256) {
         claimAndStake();
         uint256 maxAssets = maxWithdraw(msg.sender);
         require(assets <= maxAssets, "EXCEED_MAX_WITHDRAW");
-        uint256 shares = previewWithdraw(assets);
-        _initiateWithdraw(shares);
+        uint256 shares = _previewWithdrawInternal(assets);
+        _initiateWithdraw(shares, assets);
+        return shares;
     }
 
     function getLockAmount(
@@ -241,21 +281,14 @@ contract CyberVault is
         }
     }
 
-    function claim() public {
+    function claim() public returns (uint256 protocolFeeAssets) {
         uint256 rewards = cyberStakingPool.claimAllRewards();
-        uint256 protocolFeeAmount = (rewards * protocolFeeBps) / MAX_BPS;
-        if (protocolFeeAmount == 0) {
-            return;
+        protocolFeeAssets = (rewards * protocolFeeBps) / MAX_BPS;
+        if (protocolFeeAssets == 0) {
+            return protocolFeeAssets;
         }
-        uint256 shares = previewDeposit(protocolFeeAmount);
-        _mint(protocolFeeTreasury, shares);
-        emit Deposit(
-            address(this),
-            protocolFeeTreasury,
-            protocolFeeAmount,
-            shares
-        );
-        emit CollectFee(protocolFeeAmount, protocolFeeTreasury);
+        IERC20(asset()).safeTransfer(protocolFeeTreasury, protocolFeeAssets);
+        emit CollectFee(protocolFeeAssets, protocolFeeTreasury);
     }
 
     function claimAndStake() public {
@@ -268,19 +301,26 @@ contract CyberVault is
         address[] calldata receivers
     ) external {
         require(assets.length == receivers.length, "INVALID_LENGTH");
+        claim();
         uint256 totalDeposit = 0;
+        uint256[] memory shares = new uint256[](assets.length);
         for (uint256 i = 0; i < assets.length; i++) {
             require(assets[i] != 0, "ZERO_AMOUNT");
             totalDeposit += assets[i];
-            uint256 shares = previewDeposit(assets[i]);
-            _mint(receivers[i], shares);
-            emit Deposit(msg.sender, receivers[i], assets[i], shares);
+            shares[i] = _previewDepositInternal(assets[i]);
         }
+
+        for (uint256 i = 0; i < shares.length; i++) {
+            _mint(receivers[i], shares[i]);
+            emit Deposit(msg.sender, receivers[i], assets[i], shares[i]);
+        }
+
         IERC20(asset()).safeTransferFrom(
             msg.sender,
             address(this),
             totalDeposit
         );
+        stake();
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -304,12 +344,11 @@ contract CyberVault is
     /*//////////////////////////////////////////////////////////////
                             PRIVATE
     //////////////////////////////////////////////////////////////*/
-    function _initiateWithdraw(uint256 shares) private {
+    function _initiateWithdraw(uint256 shares, uint256 assets) private {
         require(shares != 0, "ZERO_AMOUNT");
 
         _transfer(msg.sender, address(this), shares);
 
-        uint256 assets = previewRedeem(shares);
         bytes32 key = bytes32(uint256(uint160(msg.sender)));
         cyberStakingPool.unstake(assets, key);
 
@@ -328,5 +367,79 @@ contract CyberVault is
             lockAmount.lockedAssets,
             lockAmount.lockEnd
         );
+    }
+
+    function _convertToShares(
+        uint256 assets,
+        Math.Rounding rounding,
+        bool countFee
+    ) private view returns (uint256) {
+        uint256 totalAssets_;
+        if (countFee) {
+            totalAssets_ = _totalAssetsWithoutFee();
+        } else {
+            totalAssets_ = totalAssets();
+        }
+        return
+            assets.mulDiv(
+                totalSupply() + 10 ** _decimalsOffset(),
+                totalAssets_ + 1,
+                rounding
+            );
+    }
+
+    function _convertToAssets(
+        uint256 shares,
+        Math.Rounding rounding,
+        bool countFee
+    ) private view returns (uint256) {
+        uint256 totalAssets_;
+        if (countFee) {
+            totalAssets_ = _totalAssetsWithoutFee();
+        } else {
+            totalAssets_ = totalAssets();
+        }
+        return
+            shares.mulDiv(
+                totalAssets_ + 1,
+                totalSupply() + 10 ** _decimalsOffset(),
+                rounding
+            );
+    }
+
+    function _totalAssetsWithoutFee() private view returns (uint256) {
+        uint256 claimable = cyberStakingPool.claimableAllRewards(address(this));
+        uint256 protocolFee = (claimable * protocolFeeBps) / MAX_BPS;
+
+        return
+            claimable -
+            protocolFee +
+            cyberStakingPool.balanceOf(address(this)) +
+            cyberStakingPool.lockedAmountByUser(address(this)) +
+            IERC20(asset()).balanceOf(address(this));
+    }
+
+    function _previewDepositInternal(
+        uint256 assets
+    ) public view returns (uint256) {
+        return _convertToShares(assets, Math.Rounding.Floor, false);
+    }
+
+    function _previewMintInternal(
+        uint256 shares
+    ) public view returns (uint256) {
+        return _convertToAssets(shares, Math.Rounding.Ceil, false);
+    }
+
+    function _previewWithdrawInternal(
+        uint256 assets
+    ) public view returns (uint256) {
+        return _convertToShares(assets, Math.Rounding.Ceil, false);
+    }
+
+    function _previewRedeemInternal(
+        uint256 shares
+    ) public view returns (uint256) {
+        return _convertToAssets(shares, Math.Rounding.Floor, false);
     }
 }

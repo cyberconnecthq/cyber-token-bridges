@@ -1,10 +1,8 @@
 | Contract                | Address                                    |
 | ----------------------- | ------------------------------------------ |
 | CyberTokenController    | 0xfd522ae1cec35a85237d1cddbffebe65e49efb98 |
-| CyberStakingPool(Impl)  | 0xe012fdeb1dcdb3819c5402a04829cf8cd737070e |
-| CyberStakingPool(Proxy) | 0xc5ee6e1bba7825b5c32b7c511501027614f8d227 |
-| CyberVault(Impl)        | 0xe3fcec27b81cd1bfa504ec201d83d57e44a0ef35 |
-| CyberVault(Proxy)       | 0x7ab9c2255bf99de0c5c022aca4f8c2ded147ef7e |
-| RewardTokenWithdrawer   | 0xfe7aa14dcf270968191170d764441a78cb0f72b2 |
-| CyberVault(Impl)        | 0x806c37a06ab64ce29eb28f01ae67ea4715894461 |
-| CyberVault(Proxy)       | 0x1002c8862850ed294e825368f70ae7ea9ad7bbc9 |
+| CyberStakingPool(Impl)  | 0x1b2d2007a6480c020e1135e57057601c24641760 |
+| CyberStakingPool(Proxy) | 0xb382b8642be4a6e7109916430527f29ed8241b01 |
+| CyberVault(Impl)        | 0x96dbc58a2bf750b01b2489c46c7e5586d4be3fa8 |
+| CyberVault(Proxy)       | 0x85c0edb7cb24ce00c4b33fd82fa18efc21e7d6bb |
+| RewardTokenWithdrawer   | 0xaf1a221db8eca631c16bf07ae5adf355ef368398 |

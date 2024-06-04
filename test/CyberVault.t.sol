@@ -19,6 +19,7 @@ contract CyberVaultTest is Test {
     address alice = address(3);
     address bob = address(4);
     address treasury = address(5);
+    address charlie = address(6);
 
     function setUp() public {
         cyberToken = new MockCyberToken();
@@ -83,15 +84,9 @@ contract CyberVaultTest is Test {
         cyberToken.mint(alice, amount);
         cyberToken.approve(address(cyberVault), amount);
         cyberVault.deposit(amount, alice);
-        console.log("stage1");
-        console.log(cyberVault.totalAssets());
-        console.log(cyberVault.totalSupply());
 
         uint256 shares = cyberVault.balanceOf(alice);
         cyberVault.initiateRedeem(shares);
-        console.log("stage2");
-        console.log(cyberVault.totalAssets());
-        console.log(cyberVault.totalSupply());
 
         vm.expectRevert("LOCKED_PERIOD_NOT_ENDED");
         cyberVault.redeem(shares, alice, alice);
@@ -102,9 +97,6 @@ contract CyberVaultTest is Test {
         cyberToken.mint(bob, amount);
         cyberToken.approve(address(cyberVault), amount);
         cyberVault.deposit(amount, bob);
-        console.log("stage3");
-        console.log(cyberVault.totalAssets());
-        console.log(cyberVault.totalSupply());
 
         cyberVault.initiateRedeem(shares);
 
@@ -113,9 +105,6 @@ contract CyberVaultTest is Test {
         vm.startPrank(alice);
         cyberVault.redeem(shares, alice, alice);
         assertEq(cyberToken.balanceOf(alice), amount);
-        console.log("stage4");
-        console.log(cyberVault.totalAssets());
-        console.log(cyberVault.totalSupply());
 
         vm.startPrank(bob);
         vm.expectRevert("LOCKED_PERIOD_NOT_ENDED");
@@ -125,9 +114,6 @@ contract CyberVaultTest is Test {
 
         cyberVault.redeem(shares, bob, bob);
         assertEq(cyberToken.balanceOf(bob), amount);
-        console.log("stage5");
-        console.log(cyberVault.totalAssets());
-        console.log(cyberVault.totalSupply());
     }
 
     function testTransfer() public {
@@ -140,6 +126,81 @@ contract CyberVaultTest is Test {
         cyberVault.transfer(bob, amount / 2);
         assertEq(cyberVault.balanceOf(alice), amount / 2);
         assertEq(cyberVault.balanceOf(bob), amount / 2);
+    }
+
+    function testPreview() public {
+        uint256 amount = cyberStakingPool.minimalStakeAmount();
+
+        vm.startPrank(owner);
+        uint256 rewards = 500000 ether;
+        cyberToken.mint(address(cyberStakingPool), rewards);
+        uint256 start = block.timestamp + 1 days;
+        uint256 end = start + 90 days;
+        uint128 emissionPerSecond = uint128(rewards / (end - start));
+        cyberStakingPool.createDistribution(
+            emissionPerSecond,
+            uint40(start),
+            uint40(end)
+        );
+
+        vm.startPrank(alice);
+        cyberToken.mint(alice, 100 * amount);
+        cyberToken.approve(address(cyberVault), type(uint256).max);
+
+        uint256 expectedShares = cyberVault.previewDeposit(amount);
+        uint256 actualShares = cyberVault.deposit(amount, alice);
+        assertEq(expectedShares, actualShares, "ERR1");
+
+        uint256 expectedAssets = cyberVault.previewMint(amount);
+        uint256 actualAssets = cyberVault.mint(amount, alice);
+        assertEq(expectedAssets, actualAssets, "ERR2");
+
+        uint256 expectedWithdraw = cyberVault.previewWithdraw(amount / 2);
+        uint256 actualWithdraw = cyberVault.initiateWithdraw(amount / 2);
+        assertEq(expectedWithdraw, actualWithdraw, "ERR3");
+
+        uint256 expectedRedeem = cyberVault.previewRedeem(amount / 2);
+        uint256 actualRedeem = cyberVault.initiateRedeem(amount / 2);
+        assertEq(expectedRedeem, actualRedeem, "ERR4");
+
+        vm.warp(start + 1 days);
+        expectedShares = cyberVault.previewDeposit(amount);
+        assertNotEq(expectedShares, actualShares, "ERR5");
+        actualShares = cyberVault.deposit(amount, alice);
+        assertEq(expectedShares, actualShares, "ERR6");
+        console.log("actualShares", actualShares);
+
+        expectedAssets = cyberVault.previewMint(amount);
+        assertNotEq(expectedAssets, actualAssets, "ERR7");
+        actualAssets = cyberVault.mint(amount, alice);
+        assertEq(expectedAssets, actualAssets, "ERR8");
+        console.log("actualAssets", actualAssets);
+
+        expectedWithdraw = cyberVault.previewWithdraw(amount);
+        assertNotEq(expectedWithdraw, actualWithdraw, "ERR9");
+        actualWithdraw = cyberVault.initiateWithdraw(amount);
+        assertEq(expectedWithdraw, actualWithdraw, "ERR10");
+        console.log("actualWithdraw", actualWithdraw);
+
+        expectedRedeem = cyberVault.previewRedeem(amount);
+        assertNotEq(expectedRedeem, actualRedeem, "ERR11");
+        actualRedeem = cyberVault.initiateRedeem(amount);
+        assertEq(expectedRedeem, actualRedeem, "ERR12");
+        console.log("actualRedeem", actualRedeem);
+
+        uint256[] memory assets = new uint256[](2);
+        assets[0] = amount;
+        assets[1] = amount;
+        address[] memory receivers = new address[](2);
+        receivers[0] = bob;
+        receivers[1] = charlie;
+
+        cyberVault.batchDeposit(assets, receivers);
+        assertEq(
+            cyberVault.balanceOf(bob),
+            cyberVault.balanceOf(charlie),
+            "ERR13"
+        );
     }
 
     function testInitiateRedeem() public {
@@ -171,7 +232,7 @@ contract CyberVaultTest is Test {
         cyberVault.initiateRedeem(shares / 2);
         assertEq(cyberVault.balanceOf(address(cyberVault)), shares / 2, "ERR2");
         assertEq(cyberVault.balanceOf(owner), shares / 2, "ERR3");
-        assertNotEq(cyberVault.balanceOf(treasury), 0, "ERR4");
+        assertNotEq(cyberToken.balanceOf(treasury), 0, "ERR4");
         assertGt(
             cyberStakingPool.balanceOf(address(cyberVault)),
             amount / 2,
@@ -218,7 +279,7 @@ contract CyberVaultTest is Test {
         cyberVault.initiateWithdraw(amount / 2);
         assertLt(cyberVault.balanceOf(address(cyberVault)), shares / 2, "ERR2");
         assertGt(cyberVault.balanceOf(owner), shares / 2, "ERR3");
-        assertNotEq(cyberVault.balanceOf(treasury), 0, "ERR4");
+        assertNotEq(cyberToken.balanceOf(treasury), 0, "ERR4");
         assertGt(
             cyberStakingPool.balanceOf(address(cyberVault)),
             amount / 2,

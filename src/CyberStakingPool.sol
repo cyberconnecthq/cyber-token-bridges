@@ -257,6 +257,36 @@ contract CyberStakingPool is
         return _rewardsBalances[rewardBalanceKey(distributionId, user)];
     }
 
+    function claimableRewards(
+        uint16 distributionId,
+        address user
+    ) public view override returns (uint256) {
+        uint256 accruedRewards = _previewUpdateUser(
+            distributionId,
+            user,
+            balanceOf(user),
+            circulatingSupply()
+        );
+        return
+            _rewardsBalances[rewardBalanceKey(distributionId, user)] +
+            accruedRewards;
+    }
+
+    function claimableAllRewards(
+        address user
+    ) external view override returns (uint256 totalRewards) {
+        for (
+            uint16 distributionId = 1;
+            distributionId <= totalDistributions;
+            ++distributionId
+        ) {
+            totalRewards =
+                totalRewards +
+                claimableRewards(distributionId, user);
+        }
+        return totalRewards;
+    }
+
     function getLockedAmountByKey(
         address user,
         bytes32 key

@@ -19,5 +19,10 @@ interface ICyberStakingPool is IERC20 {
         uint16 _distributionId,
         address _user
     ) external view returns (uint256);
+    function claimableRewards(
+        uint16 _distributionId,
+        address _user
+    ) external view returns (uint256);
+    function claimableAllRewards(address _user) external view returns (uint256);
     function lockedAmountByUser(address user) external view returns (uint256);
 }

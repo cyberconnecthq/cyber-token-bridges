@@ -258,7 +258,7 @@ contract DeployWithdrawer is Script, DeploySetting {
                             deployParams[block.chainid].protocolOwner, // owner
                             deployParams[block.chainid].cyberToken, // cyber token
                             bytes32(
-                                0x20afcd42d2cf5170a0f7818faa66aeaca1aa09df009d42159073e874b21f4e9f
+                                0xb42fefe47d4758c54f0c037cfc6049faa416edb825f6835bd9082d4f2a5f8ad0
                             ), // merkle root
                             deployParams[block.chainid].protocolOwner // bridge recipient
                         )
@@ -442,13 +442,13 @@ contract ConfigCyberStakingPool is Script, DeploySetting {
         vm.startBroadcast();
 
         if (block.chainid == DeploySetting.CYBER_TESTNET) {
-            // CyberStakingPool(deployParams[block.chainid].cyberStakingPool)
-            //     .setLockDuration(5 minutes);
-            // CyberStakingPool(deployParams[block.chainid].cyberStakingPool)
-            //     .setMinimalStakeAmount(1 ether);
+            CyberStakingPool(deployParams[block.chainid].cyberStakingPool)
+                .setLockDuration(5 minutes);
+            CyberStakingPool(deployParams[block.chainid].cyberStakingPool)
+                .setMinimalStakeAmount(1 ether);
             uint256 totalRewards = 500000 ether;
-            uint256 startTime = 1717401600;
-            uint256 endTime = 1717401600 + 90 days;
+            uint256 startTime = 1717516800;
+            uint256 endTime = startTime + 90 days;
             CyberStakingPool(deployParams[block.chainid].cyberStakingPool)
                 .createDistribution(
                     uint128(totalRewards / 90 days),
