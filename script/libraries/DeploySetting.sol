@@ -76,11 +76,11 @@ contract DeploySetting {
             deployParams[CYBER_TESTNET]
                 .cyberStakingPool = 0xC5ee6e1bBA7825B5C32b7c511501027614F8D227;
             deployParams[CYBER_TESTNET]
-                .cyberVault = 0x7AB9C2255BF99de0c5C022AcA4F8C2DeD147EF7E;
+                .cyberVault = 0x1002C8862850ED294E825368f70Ae7Ea9ad7bBC9;
             deployParams[CYBER_TESTNET]
                 .treasury = 0x7884f7F04F994da14302a16Cf15E597e31eebECf;
             deployParams[CYBER_TESTNET]
-                .withdrawer = 0xbCa654C538Db982D4B1414eD1627CeB1d3776Dd8;
+                .withdrawer = 0xfE7Aa14DCF270968191170D764441A78cB0f72b2;
         }
 
         {

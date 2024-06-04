@@ -137,8 +137,7 @@ contract CyberStakingPoolTest is Test {
         cyberStakingPool.createDistribution(
             emissionPerSecond,
             uint40(start),
-            uint40(end),
-            cyberToken
+            uint40(end)
         );
 
         cyberToken.mint(owner, amount);
@@ -210,12 +209,7 @@ contract CyberStakingPoolTest is Test {
         uint128 emissionPerSecond = uint128(rewards / (endTs - startTs));
         vm.warp(uint256(startTs - 1));
         vm.startPrank(owner);
-        cyberStakingPool.createDistribution(
-            emissionPerSecond,
-            startTs,
-            endTs,
-            cyberToken
-        );
+        cyberStakingPool.createDistribution(emissionPerSecond, startTs, endTs);
         cyberToken.mint(address(cyberStakingPool), rewards);
 
         uint256 expectedOneDayRewards = emissionPerSecond * 1 days;

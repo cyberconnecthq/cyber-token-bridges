@@ -99,6 +99,28 @@ contract CyberVault is
             IERC20(asset()).balanceOf(address(this));
     }
 
+    /** @dev See {IERC4626-deposit}. */
+    function deposit(
+        uint256 assets,
+        address receiver
+    ) public override returns (uint256) {
+        claim();
+        uint256 shares = super.deposit(assets, receiver);
+        stake();
+        return shares;
+    }
+
+    /** @dev See {IERC4626-mint}. */
+    function mint(
+        uint256 shares,
+        address receiver
+    ) public override returns (uint256) {
+        claim();
+        uint256 assets = super.mint(shares, receiver);
+        stake();
+        return assets;
+    }
+
     /** @dev See {IERC4626-withdraw}. */
     function withdraw(
         uint256 assets,
@@ -161,16 +183,6 @@ contract CyberVault is
         emit Withdraw(caller, receiver, _owner, assets, shares);
     }
 
-    function _deposit(
-        address caller,
-        address receiver,
-        uint256 assets,
-        uint256 shares
-    ) internal override {
-        super._deposit(caller, receiver, assets, shares);
-        stake();
-    }
-
     function _update(
         address from,
         address to,
@@ -197,14 +209,14 @@ contract CyberVault is
     //////////////////////////////////////////////////////////////*/
 
     function initiateRedeem(uint256 shares) external {
-        claim();
+        claimAndStake();
         uint256 maxShares = maxRedeem(msg.sender);
         require(shares <= maxShares, "EXCEED_MAX_REDEEM");
         _initiateWithdraw(shares);
     }
 
     function initiateWithdraw(uint256 assets) external {
-        claim();
+        claimAndStake();
         uint256 maxAssets = maxWithdraw(msg.sender);
         require(assets <= maxAssets, "EXCEED_MAX_WITHDRAW");
         uint256 shares = previewWithdraw(assets);
@@ -220,6 +232,7 @@ contract CyberVault is
     function stake() public {
         uint256 amount = IERC20(asset()).balanceOf(address(this));
         if (
+            amount != 0 &&
             amount + cyberStakingPool.balanceOf(address(this)) >=
             cyberStakingPool.minimalStakeAmount()
         ) {
@@ -245,7 +258,7 @@ contract CyberVault is
         emit CollectFee(protocolFeeAmount, protocolFeeTreasury);
     }
 
-    function claimAndStake() external {
+    function claimAndStake() public {
         claim();
         stake();
     }
@@ -268,7 +281,6 @@ contract CyberVault is
             address(this),
             totalDeposit
         );
-        stake();
     }
 
     /*//////////////////////////////////////////////////////////////

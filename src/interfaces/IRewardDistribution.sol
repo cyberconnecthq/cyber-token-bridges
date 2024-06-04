@@ -9,7 +9,6 @@ struct DistributionData {
     uint40 endTime;
     uint40 updateTimestamp;
     uint128 emissionPerSecond;
-    IERC20 rewardToken;
     uint256 index;
     mapping(address => uint256) userIndices;
 }
@@ -49,13 +48,11 @@ interface IRewardDistribution {
     /// @param emissionPerSecond The amount of reward token emitted per second
     /// @param startTime The start time of the distribution in UNIX timestamp
     /// @param endTime The end time of the distribution in UNIX timestamp
-    /// @param rewardToken The ERC20 token to be used as the reward. The rewardToken must be strictly ERC-20 compliant.
     /// @dev Emits a DistributionIndexUpdated event on success
     function createDistribution(
         uint128 emissionPerSecond,
         uint40 startTime,
-        uint40 endTime,
-        IERC20 rewardToken
+        uint40 endTime
     ) external;
 
     /// @notice Sets the end time for an existing distribution

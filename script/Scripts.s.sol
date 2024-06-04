@@ -258,7 +258,7 @@ contract DeployWithdrawer is Script, DeploySetting {
                             deployParams[block.chainid].protocolOwner, // owner
                             deployParams[block.chainid].cyberToken, // cyber token
                             bytes32(
-                                0x67402f14c1900edbbb1c1afafbf3611bb617ca25e94ad9880f5e71d5a60d6b55
+                                0x20afcd42d2cf5170a0f7818faa66aeaca1aa09df009d42159073e874b21f4e9f
                             ), // merkle root
                             deployParams[block.chainid].protocolOwner // bridge recipient
                         )
@@ -277,7 +277,7 @@ contract DeployWithdrawer is Script, DeploySetting {
                             deployParams[block.chainid].cyberToken, // cyber token
                             deployParams[block.chainid].cyberVault, // cyber vault
                             bytes32(
-                                0xa54dbae6d2b0bb1541f2ad2ad5193ef646dec0474071abbcf6911717df84dce7
+                                0x20afcd42d2cf5170a0f7818faa66aeaca1aa09df009d42159073e874b21f4e9f
                             ) // merkle root
                         )
                     ),
@@ -453,8 +453,7 @@ contract ConfigCyberStakingPool is Script, DeploySetting {
                 .createDistribution(
                     uint128(totalRewards / 90 days),
                     uint40(startTime),
-                    uint40(endTime),
-                    IERC20(deployParams[block.chainid].cyberToken)
+                    uint40(endTime)
                 );
         } else {
             revert("NOT_SUPPORTED_CHAIN_ID");

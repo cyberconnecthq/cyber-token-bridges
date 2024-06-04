@@ -41,8 +41,7 @@ abstract contract RewardDistribution is
     function createDistribution(
         uint128 emissionPerSecond_,
         uint40 startTime_,
-        uint40 endTime_,
-        IERC20 rewardToken_
+        uint40 endTime_
     ) external onlyOwner onlyValidDistributionEndTime(endTime_) {
         require(
             startTime_ > block.timestamp,
@@ -50,8 +49,6 @@ abstract contract RewardDistribution is
         );
 
         require(startTime_ < endTime_, "INVALID_DISTRIBUTION_END_TIME");
-
-        require(address(rewardToken_) != address(0), "ZERO_ADDRESS");
 
         totalDistributions++;
         uint16 distributionId = totalDistributions;
@@ -61,7 +58,6 @@ abstract contract RewardDistribution is
         distribution.emissionPerSecond = emissionPerSecond_;
         distribution.startTime = startTime_;
         distribution.endTime = endTime_;
-        distribution.rewardToken = rewardToken_;
     }
 
     /// @inheritdoc IRewardDistribution

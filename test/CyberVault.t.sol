@@ -144,7 +144,7 @@ contract CyberVaultTest is Test {
 
     function testInitiateRedeem() public {
         uint256 amount = cyberStakingPool.minimalStakeAmount();
-        
+
         vm.startPrank(owner);
         vm.warp(block.timestamp);
         uint256 rewards = 10000 ether;
@@ -154,29 +154,44 @@ contract CyberVaultTest is Test {
         cyberStakingPool.createDistribution(
             emissionPerSecond,
             uint40(start),
-            uint40(end),
-            cyberToken
+            uint40(end)
         );
 
         cyberToken.mint(owner, amount);
         cyberToken.approve(address(cyberVault), amount);
         cyberVault.deposit(amount, owner);
-        assertEq(cyberStakingPool.balanceOf(address(cyberVault)), amount, "ERR2");
+        assertEq(
+            cyberStakingPool.balanceOf(address(cyberVault)),
+            amount,
+            "ERR1"
+        );
 
         vm.warp(start + 1 days);
         uint256 shares = cyberVault.balanceOf(owner);
         cyberVault.initiateRedeem(shares / 2);
-        assertEq(cyberVault.balanceOf(address(cyberVault)), shares / 2);
-        assertEq(cyberVault.balanceOf(owner), shares / 2);
-        assertNotEq(cyberVault.balanceOf(treasury), 0);
-        assertLt(cyberStakingPool.balanceOf(address(cyberVault)), amount/2);
-        assertGt(cyberStakingPool.balanceOf(address(cyberStakingPool)), amount/2);
-        assertGt(cyberStakingPool.lockedAmountByUser(address(cyberVault)), amount/2);
+        assertEq(cyberVault.balanceOf(address(cyberVault)), shares / 2, "ERR2");
+        assertEq(cyberVault.balanceOf(owner), shares / 2, "ERR3");
+        assertNotEq(cyberVault.balanceOf(treasury), 0, "ERR4");
+        assertGt(
+            cyberStakingPool.balanceOf(address(cyberVault)),
+            amount / 2,
+            "ERR5"
+        );
+        assertGt(
+            cyberStakingPool.balanceOf(address(cyberStakingPool)),
+            amount / 2,
+            "ERR6"
+        );
+        assertGt(
+            cyberStakingPool.lockedAmountByUser(address(cyberVault)),
+            amount / 2,
+            "ERR7"
+        );
     }
 
     function testInitiateWithdraw() public {
         uint256 amount = cyberStakingPool.minimalStakeAmount();
-        
+
         vm.startPrank(owner);
         vm.warp(block.timestamp);
         uint256 rewards = 10000 ether;
@@ -186,24 +201,39 @@ contract CyberVaultTest is Test {
         cyberStakingPool.createDistribution(
             emissionPerSecond,
             uint40(start),
-            uint40(end),
-            cyberToken
+            uint40(end)
         );
 
         cyberToken.mint(owner, amount);
         cyberToken.approve(address(cyberVault), amount);
         cyberVault.deposit(amount, owner);
-        assertEq(cyberStakingPool.balanceOf(address(cyberVault)), amount, "ERR2");
+        assertEq(
+            cyberStakingPool.balanceOf(address(cyberVault)),
+            amount,
+            "ERR1"
+        );
 
         vm.warp(start + 1 days);
         uint256 shares = cyberVault.balanceOf(owner);
         cyberVault.initiateWithdraw(amount / 2);
-        assertLt(cyberVault.balanceOf(address(cyberVault)), shares / 2);
-        assertGt(cyberVault.balanceOf(owner), shares / 2);
-        assertNotEq(cyberVault.balanceOf(treasury), 0);
-        assertEq(cyberStakingPool.balanceOf(address(cyberVault)), amount/2);
-        assertEq(cyberStakingPool.balanceOf(address(cyberStakingPool)), amount/2);
-        assertEq(cyberStakingPool.lockedAmountByUser(address(cyberVault)), amount/2);
+        assertLt(cyberVault.balanceOf(address(cyberVault)), shares / 2, "ERR2");
+        assertGt(cyberVault.balanceOf(owner), shares / 2, "ERR3");
+        assertNotEq(cyberVault.balanceOf(treasury), 0, "ERR4");
+        assertGt(
+            cyberStakingPool.balanceOf(address(cyberVault)),
+            amount / 2,
+            "ERR5"
+        );
+        assertEq(
+            cyberStakingPool.balanceOf(address(cyberStakingPool)),
+            amount / 2,
+            "ERR6"
+        );
+        assertEq(
+            cyberStakingPool.lockedAmountByUser(address(cyberVault)),
+            amount / 2,
+            "ERR7"
+        );
     }
 
     function testRedeem() public {
@@ -242,8 +272,7 @@ contract CyberVaultTest is Test {
         cyberStakingPool.createDistribution(
             emissionPerSecond,
             uint40(start),
-            uint40(end),
-            cyberToken
+            uint40(end)
         );
 
         cyberToken.mint(owner, amount);
