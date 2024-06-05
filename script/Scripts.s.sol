@@ -248,7 +248,10 @@ contract DeployWithdrawer is Script, DeploySetting {
         _setDeployParams();
         vm.startBroadcast();
 
-        if (block.chainid == DeploySetting.BNBT) {
+        if (
+            block.chainid == DeploySetting.BNBT ||
+            block.chainid == DeploySetting.OP_SEPOLIA
+        ) {
             address withdrawer = Create2Deployer(
                 deployParams[block.chainid].deployerContract
             ).deploy(
@@ -297,7 +300,10 @@ contract ConfigWithdrawer is Script, DeploySetting {
         _setDeployParams();
         vm.startBroadcast();
 
-        if (block.chainid == DeploySetting.BNBT) {
+        if (
+            block.chainid == DeploySetting.BNBT ||
+            block.chainid == DeploySetting.OP_SEPOLIA
+        ) {
             LaunchTokenWithdrawer(deployParams[block.chainid].withdrawer)
                 .setLockDuration(5 minutes);
         } else {

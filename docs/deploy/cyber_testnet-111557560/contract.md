@@ -5,4 +5,4 @@
 | CyberStakingPool(Proxy) | 0xb382b8642be4a6e7109916430527f29ed8241b01 |
 | CyberVault(Impl)        | 0x96dbc58a2bf750b01b2489c46c7e5586d4be3fa8 |
 | CyberVault(Proxy)       | 0x85c0edb7cb24ce00c4b33fd82fa18efc21e7d6bb |
-| RewardTokenWithdrawer   | 0xaf1a221db8eca631c16bf07ae5adf355ef368398 |
+| RewardTokenWithdrawer   | 0x236b1867868d6898fe77e6c7d9eb9416a0fbf986 |

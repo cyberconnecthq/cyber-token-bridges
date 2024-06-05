@@ -46,6 +46,20 @@ contract DeploySetting {
         }
 
         {
+            deployParams[OP_SEPOLIA]
+                .deployerContract = 0x8eD1282a1aCE084De1E99E9Ce5ed68896C49d65f;
+            deployParams[OP_SEPOLIA]
+                .protocolOwner = 0x7884f7F04F994da14302a16Cf15E597e31eebECf;
+            deployParams[OP_SEPOLIA]
+                .cyberToken = 0x1F765DC8b75D46786171A7967b99f1184D91b67B;
+            deployParams[OP_SEPOLIA]
+                .lzEndpoint = 0x6EDCE65403992e310A62460808c4b910D972f10f;
+            deployParams[OP_SEPOLIA].eid = 40232;
+            deployParams[OP_SEPOLIA]
+                .withdrawer = 0x1462F525cD571051d4e8B4Be6938dbe27AEFBb09;
+        }
+
+        {
             deployParams[BNBT]
                 .deployerContract = 0x8eD1282a1aCE084De1E99E9Ce5ed68896C49d65f;
             deployParams[BNBT]
