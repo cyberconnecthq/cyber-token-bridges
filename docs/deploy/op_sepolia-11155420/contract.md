@@ -1,3 +1,3 @@
 | Contract              | Address                                    |
 | --------------------- | ------------------------------------------ |
-| LaunchTokenWithdrawer | 0x1462f525cd571051d4e8b4be6938dbe27aefbb09 |
+| LaunchTokenWithdrawer | 0x50db3bfdb54b424b600d43defece564b33797593 |

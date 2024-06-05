@@ -16,6 +16,8 @@ import "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 import "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFTCore.sol";
 import "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroEndpointV2.sol";
 import "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/interfaces/IOAppOptionsType3.sol";
+import "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/interfaces/IOAppCore.sol";
+import "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/IMessageLibManager.sol";
 import { OptionsBuilder } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -23,6 +25,15 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract TempScript is Script, DeploySetting {
+    function run() external {
+        _setDeployParams();
+        vm.startBroadcast();
+
+        vm.stopBroadcast();
+    }
+}
+
+contract GetOappConfog is Script, DeploySetting {
     // the formal properties are documented in the setter functions
     struct UlnConfig {
         uint64 confirmations;
@@ -59,6 +70,103 @@ contract TempScript is Script, DeploySetting {
         }
         for (uint256 i = 0; i < ulnConfig.optionalDVNs.length; i++) {
             console.logAddress(ulnConfig.optionalDVNs[i]);
+        }
+
+        vm.stopBroadcast();
+    }
+}
+
+contract SetOappConfog is Script, DeploySetting {
+    // the formal properties are documented in the setter functions
+    struct UlnConfig {
+        uint64 confirmations;
+        // we store the length of required DVNs and optional DVNs instead of using DVN.length directly to save gas
+        uint8 requiredDVNCount; // 0 indicate DEFAULT, NIL_DVN_COUNT indicate NONE (to override the value of default)
+        uint8 optionalDVNCount; // 0 indicate DEFAULT, NIL_DVN_COUNT indicate NONE (to override the value of default)
+        uint8 optionalDVNThreshold; // (0, optionalDVNCount]
+        address[] requiredDVNs; // no duplicates. sorted an an ascending order. allowed overlap with optionalDVNs
+        address[] optionalDVNs; // no duplicates. sorted an an ascending order. allowed overlap with requiredDVNs
+    }
+
+    function run() external {
+        _setDeployParams();
+        vm.startBroadcast();
+
+        if (block.chainid == DeploySetting.BNB) {
+            SetConfigParam[] memory params = new SetConfigParam[](1);
+            address[] memory requiredDVNs = new address[](2);
+            requiredDVNs[0] = 0x8ddF05F9A5c488b4973897E278B58895bF87Cb24;
+            requiredDVNs[1] = 0xfD6865c841c2d64565562fCc7e05e619A30615f0;
+            params[0] = SetConfigParam(
+                deployParams[CYBER].eid,
+                2, // CONFIG_TYPE_ULN
+                abi.encode(
+                    UlnConfig(
+                        20, // confirmations
+                        2, // requiredDVNCount
+                        0, // optionalDVNCount
+                        0, // optionalDVNThreshold
+                        requiredDVNs,
+                        new address[](0)
+                    )
+                )
+            );
+            ILayerZeroEndpointV2(deployParams[block.chainid].lzEndpoint)
+                .setConfig(
+                    0x0C04e2354c913197EBB1D2D3406dD406F68a227d,
+                    deployParams[block.chainid].lzReceiveLib,
+                    params
+                );
+            ILayerZeroEndpointV2(deployParams[block.chainid].lzEndpoint)
+                .setConfig(
+                    0x0C04e2354c913197EBB1D2D3406dD406F68a227d,
+                    deployParams[block.chainid].lzSendLib,
+                    params
+                );
+            IOAppCore(0x0C04e2354c913197EBB1D2D3406dD406F68a227d).setPeer(
+                deployParams[CYBER].eid,
+                bytes32(
+                    uint256(uint160(0x4824F04e8F9d32e6533948E22535a3f23420b601))
+                )
+            );
+        } else if (block.chainid == DeploySetting.CYBER) {
+            SetConfigParam[] memory params = new SetConfigParam[](1);
+            address[] memory requiredDVNs = new address[](1);
+            requiredDVNs[0] = 0x6788f52439ACA6BFF597d3eeC2DC9a44B8FEE842;
+            params[0] = SetConfigParam(
+                deployParams[BNB].eid,
+                2, // CONFIG_TYPE_ULN
+                abi.encode(
+                    UlnConfig(
+                        20, // confirmations
+                        1, // requiredDVNCount
+                        0, // optionalDVNCount
+                        0, // optionalDVNThreshold
+                        requiredDVNs,
+                        new address[](0)
+                    )
+                )
+            );
+            ILayerZeroEndpointV2(deployParams[block.chainid].lzEndpoint)
+                .setConfig(
+                    0x4824F04e8F9d32e6533948E22535a3f23420b601,
+                    deployParams[block.chainid].lzReceiveLib,
+                    params
+                );
+            ILayerZeroEndpointV2(deployParams[block.chainid].lzEndpoint)
+                .setConfig(
+                    0x4824F04e8F9d32e6533948E22535a3f23420b601,
+                    deployParams[block.chainid].lzSendLib,
+                    params
+                );
+            IOAppCore(0x4824F04e8F9d32e6533948E22535a3f23420b601).setPeer(
+                deployParams[BNB].eid,
+                bytes32(
+                    uint256(uint160(0x0C04e2354c913197EBB1D2D3406dD406F68a227d))
+                )
+            );
+        } else {
+            revert("CHAIN_ID_NOT_SUPPORTED");
         }
 
         vm.stopBroadcast();
@@ -261,7 +369,7 @@ contract DeployWithdrawer is Script, DeploySetting {
                             deployParams[block.chainid].protocolOwner, // owner
                             deployParams[block.chainid].cyberToken, // cyber token
                             bytes32(
-                                0xb42fefe47d4758c54f0c037cfc6049faa416edb825f6835bd9082d4f2a5f8ad0
+                                0xda9211796fb771766e7404f4abca7a3b3d1758325e99f75211189891a623bb3f
                             ), // merkle root
                             deployParams[block.chainid].protocolOwner // bridge recipient
                         )
