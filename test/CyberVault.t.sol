@@ -78,7 +78,7 @@ contract CyberVaultTest is Test {
         cyberVault.deposit(type(uint256).max + 1, alice);
     }
 
-    function testWithdraw() public {
+    function testOverlapRedeem() public {
         uint256 amount = cyberStakingPool.minimalStakeAmount();
         vm.startPrank(alice);
         cyberToken.mint(alice, amount);
@@ -318,6 +318,32 @@ contract CyberVaultTest is Test {
 
         vm.warp(block.timestamp + 8 days);
         cyberVault.redeem(shares / 2, alice, alice);
+        assertLt(cyberVault.balanceOf(address(cyberVault)), shares);
+        assertGt(cyberToken.balanceOf(alice), 0);
+    }
+
+    function testWithdraw() public {
+        uint256 amount = cyberStakingPool.minimalStakeAmount();
+        vm.startPrank(alice);
+        vm.warp(block.timestamp);
+
+        cyberToken.mint(alice, amount);
+        cyberToken.approve(address(cyberVault), amount);
+        cyberVault.deposit(amount, alice);
+
+        uint256 shares = cyberVault.balanceOf(alice);
+        uint256 assets = cyberVault.previewWithdraw(shares);
+        cyberVault.initiateWithdraw(assets / 2);
+
+        vm.expectRevert("INVALID_ASSETS");
+        cyberVault.withdraw(assets, alice, alice);
+
+        vm.warp(block.timestamp + 1 days);
+        vm.expectRevert("LOCKED_PERIOD_NOT_ENDED");
+        cyberVault.withdraw(assets / 2, alice, alice);
+
+        vm.warp(block.timestamp + 8 days);
+        cyberVault.withdraw(assets / 2, alice, alice);
         assertLt(cyberVault.balanceOf(address(cyberVault)), shares);
         assertGt(cyberToken.balanceOf(alice), 0);
     }
