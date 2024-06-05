@@ -167,10 +167,6 @@ contract CyberStakingPool is
         return userRewards;
     }
 
-    function minimalStakeAmount() external view override returns (uint256) {
-        return _minimalStakeAmount;
-    }
-
     function _authorizeUpgrade(address) internal view override {
         require(msg.sender == owner(), "ONLY_OWNER");
     }
@@ -178,6 +174,10 @@ contract CyberStakingPool is
     /*//////////////////////////////////////////////////////////////
                             EXTERNAL
     //////////////////////////////////////////////////////////////*/
+
+    function minimalStakeAmount() external view override returns (uint256) {
+        return _minimalStakeAmount;
+    }
 
     function stake(uint256 _amount) external override updateReward(msg.sender) {
         require(_amount > 0, "ZERO_AMOUNT");
@@ -257,21 +257,6 @@ contract CyberStakingPool is
         return _rewardsBalances[rewardBalanceKey(distributionId, user)];
     }
 
-    function claimableRewards(
-        uint16 distributionId,
-        address user
-    ) public view override returns (uint256) {
-        uint256 accruedRewards = _previewUpdateUser(
-            distributionId,
-            user,
-            balanceOf(user),
-            circulatingSupply()
-        );
-        return
-            _rewardsBalances[rewardBalanceKey(distributionId, user)] +
-            accruedRewards;
-    }
-
     function claimableAllRewards(
         address user
     ) external view override returns (uint256 totalRewards) {
@@ -300,19 +285,34 @@ contract CyberStakingPool is
         return _lockedAmountByUser[user];
     }
 
-    function circulatingSupply() public view returns (uint256) {
-        return totalSupply() - protocolLockedAmount;
-    }
-
     /*//////////////////////////////////////////////////////////////
                             PUBLIC
     //////////////////////////////////////////////////////////////*/
+
+    function circulatingSupply() public view returns (uint256) {
+        return totalSupply() - protocolLockedAmount;
+    }
 
     function rewardBalanceKey(
         uint16 distributionId,
         address user
     ) public pure returns (bytes32) {
         return keccak256(abi.encode(distributionId, user));
+    }
+
+    function claimableRewards(
+        uint16 distributionId,
+        address user
+    ) public view override returns (uint256) {
+        uint256 accruedRewards = _previewUpdateUser(
+            distributionId,
+            user,
+            balanceOf(user),
+            circulatingSupply()
+        );
+        return
+            _rewardsBalances[rewardBalanceKey(distributionId, user)] +
+            accruedRewards;
     }
 
     /*//////////////////////////////////////////////////////////////

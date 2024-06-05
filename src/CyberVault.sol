@@ -421,25 +421,25 @@ contract CyberVault is
 
     function _previewDepositInternal(
         uint256 assets
-    ) public view returns (uint256) {
+    ) private view returns (uint256) {
         return _convertToShares(assets, Math.Rounding.Floor, false);
     }
 
     function _previewMintInternal(
         uint256 shares
-    ) public view returns (uint256) {
+    ) private view returns (uint256) {
         return _convertToAssets(shares, Math.Rounding.Ceil, false);
     }
 
     function _previewWithdrawInternal(
         uint256 assets
-    ) public view returns (uint256) {
+    ) private view returns (uint256) {
         return _convertToShares(assets, Math.Rounding.Ceil, false);
     }
 
     function _previewRedeemInternal(
         uint256 shares
-    ) public view returns (uint256) {
+    ) private view returns (uint256) {
         return _convertToAssets(shares, Math.Rounding.Floor, false);
     }
 }
