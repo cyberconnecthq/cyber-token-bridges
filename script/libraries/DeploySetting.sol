@@ -43,6 +43,8 @@ contract DeploySetting {
             deployParams[SEPOLIA]
                 .lzController = 0x12E4147A0C8d8d00eb3Eeb30Df3a089aB0420000;
             deployParams[SEPOLIA].eid = 40161;
+            deployParams[SEPOLIA]
+                .withdrawer = 0x26A440156F7eD13388ED12c7Db1ff0c7B717d8e4;
         }
 
         {
@@ -56,7 +58,7 @@ contract DeploySetting {
                 .lzEndpoint = 0x6EDCE65403992e310A62460808c4b910D972f10f;
             deployParams[OP_SEPOLIA].eid = 40232;
             deployParams[OP_SEPOLIA]
-                .withdrawer = 0x1462F525cD571051d4e8B4Be6938dbe27AEFBb09;
+                .withdrawer = 0xF01BC9642a510658F4E6B177A74a64C5504b3796;
         }
 
         {
@@ -72,7 +74,7 @@ contract DeploySetting {
                 .lzController = 0xD610b93C19e87b7C3039bc8DA906a233aD85386b;
             deployParams[BNBT].eid = 40102;
             deployParams[BNBT]
-                .withdrawer = 0x91768AfD9B8adB5110E93AF7Aea374e7E75d2d8F;
+                .withdrawer = 0x2F5cD1f3d181bE3E54943B1231a35F79f9022Fd1;
         }
 
         {
@@ -94,7 +96,7 @@ contract DeploySetting {
             deployParams[CYBER_TESTNET]
                 .treasury = 0x7884f7F04F994da14302a16Cf15E597e31eebECf;
             deployParams[CYBER_TESTNET]
-                .withdrawer = 0xAf1a221Db8eCa631c16Bf07ae5ADF355ef368398;
+                .withdrawer = 0x8098aE11552A1aAd82d7b2CE0d64853945dA1a03;
         }
 
         {

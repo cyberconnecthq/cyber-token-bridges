@@ -93,17 +93,42 @@ contract SetOappConfog is Script, DeploySetting {
         vm.startBroadcast();
 
         if (block.chainid == DeploySetting.BNB) {
-            SetConfigParam[] memory params = new SetConfigParam[](1);
-            address[] memory requiredDVNs = new address[](2);
-            requiredDVNs[0] = 0x8ddF05F9A5c488b4973897E278B58895bF87Cb24;
-            requiredDVNs[1] = 0xfD6865c841c2d64565562fCc7e05e619A30615f0;
-            params[0] = SetConfigParam(
+            // SetConfigParam[] memory sendParams = new SetConfigParam[](1);
+            // address[] memory requiredDVNs = new address[](2);
+            // requiredDVNs[0] = 0x8ddF05F9A5c488b4973897E278B58895bF87Cb24;
+            // requiredDVNs[1] = 0xfD6865c841c2d64565562fCc7e05e619A30615f0;
+            // sendParams[0] = SetConfigParam(
+            //     deployParams[CYBER].eid,
+            //     2, // CONFIG_TYPE_ULN
+            //     abi.encode(
+            //         UlnConfig(
+            //             20, // confirmations
+            //             2, // requiredDVNCount
+            //             0, // optionalDVNCount
+            //             0, // optionalDVNThreshold
+            //             requiredDVNs,
+            //             new address[](0)
+            //         )
+            //     )
+            // );
+
+            // ILayerZeroEndpointV2(deployParams[block.chainid].lzEndpoint)
+            //     .setConfig(
+            //         0x0C04e2354c913197EBB1D2D3406dD406F68a227d,
+            //         deployParams[block.chainid].lzSendLib,
+            //         sendParams
+            //     );
+
+            SetConfigParam[] memory receiveParams = new SetConfigParam[](1);
+            address[] memory requiredDVNs = new address[](1);
+            requiredDVNs[0] = 0xfD6865c841c2d64565562fCc7e05e619A30615f0;
+            receiveParams[0] = SetConfigParam(
                 deployParams[CYBER].eid,
                 2, // CONFIG_TYPE_ULN
                 abi.encode(
                     UlnConfig(
                         20, // confirmations
-                        2, // requiredDVNCount
+                        1, // requiredDVNCount
                         0, // optionalDVNCount
                         0, // optionalDVNThreshold
                         requiredDVNs,
@@ -111,24 +136,19 @@ contract SetOappConfog is Script, DeploySetting {
                     )
                 )
             );
+
             ILayerZeroEndpointV2(deployParams[block.chainid].lzEndpoint)
                 .setConfig(
                     0x0C04e2354c913197EBB1D2D3406dD406F68a227d,
                     deployParams[block.chainid].lzReceiveLib,
-                    params
+                    receiveParams
                 );
-            ILayerZeroEndpointV2(deployParams[block.chainid].lzEndpoint)
-                .setConfig(
-                    0x0C04e2354c913197EBB1D2D3406dD406F68a227d,
-                    deployParams[block.chainid].lzSendLib,
-                    params
-                );
-            IOAppCore(0x0C04e2354c913197EBB1D2D3406dD406F68a227d).setPeer(
-                deployParams[CYBER].eid,
-                bytes32(
-                    uint256(uint160(0x4824F04e8F9d32e6533948E22535a3f23420b601))
-                )
-            );
+            // IOAppCore(0x0C04e2354c913197EBB1D2D3406dD406F68a227d).setPeer(
+            //     deployParams[CYBER].eid,
+            //     bytes32(
+            //         uint256(uint160(0x4824F04e8F9d32e6533948E22535a3f23420b601))
+            //     )
+            // );
         } else if (block.chainid == DeploySetting.CYBER) {
             SetConfigParam[] memory params = new SetConfigParam[](1);
             address[] memory requiredDVNs = new address[](1);
@@ -159,12 +179,12 @@ contract SetOappConfog is Script, DeploySetting {
                     deployParams[block.chainid].lzSendLib,
                     params
                 );
-            IOAppCore(0x4824F04e8F9d32e6533948E22535a3f23420b601).setPeer(
-                deployParams[BNB].eid,
-                bytes32(
-                    uint256(uint160(0x0C04e2354c913197EBB1D2D3406dD406F68a227d))
-                )
-            );
+            // IOAppCore(0x4824F04e8F9d32e6533948E22535a3f23420b601).setPeer(
+            //     deployParams[BNB].eid,
+            //     bytes32(
+            //         uint256(uint160(0x0C04e2354c913197EBB1D2D3406dD406F68a227d))
+            //     )
+            // );
         } else {
             revert("CHAIN_ID_NOT_SUPPORTED");
         }
@@ -358,7 +378,8 @@ contract DeployWithdrawer is Script, DeploySetting {
 
         if (
             block.chainid == DeploySetting.BNBT ||
-            block.chainid == DeploySetting.OP_SEPOLIA
+            block.chainid == DeploySetting.OP_SEPOLIA ||
+            block.chainid == DeploySetting.SEPOLIA
         ) {
             address withdrawer = Create2Deployer(
                 deployParams[block.chainid].deployerContract
@@ -369,7 +390,7 @@ contract DeployWithdrawer is Script, DeploySetting {
                             deployParams[block.chainid].protocolOwner, // owner
                             deployParams[block.chainid].cyberToken, // cyber token
                             bytes32(
-                                0xda9211796fb771766e7404f4abca7a3b3d1758325e99f75211189891a623bb3f
+                                0x5b982cbc0aaa3c4a565587cbe7fdf90ec7fdcf1a7dd1c99f8c4b80246a1f3826
                             ), // merkle root
                             deployParams[block.chainid].protocolOwner // bridge recipient
                         )
@@ -388,7 +409,7 @@ contract DeployWithdrawer is Script, DeploySetting {
                             deployParams[block.chainid].cyberToken, // cyber token
                             deployParams[block.chainid].cyberVault, // cyber vault
                             bytes32(
-                                0x20afcd42d2cf5170a0f7818faa66aeaca1aa09df009d42159073e874b21f4e9f
+                                0x787701ccbc9901e0784d311f884298f249e9ee386c5f5097d5866d7f0c446318
                             ) // merkle root
                         )
                     ),
@@ -410,10 +431,11 @@ contract ConfigWithdrawer is Script, DeploySetting {
 
         if (
             block.chainid == DeploySetting.BNBT ||
-            block.chainid == DeploySetting.OP_SEPOLIA
+            block.chainid == DeploySetting.OP_SEPOLIA ||
+            block.chainid == DeploySetting.SEPOLIA
         ) {
             LaunchTokenWithdrawer(deployParams[block.chainid].withdrawer)
-                .setLockDuration(5 minutes);
+                .setLockDuration(10 minutes);
         } else {
             revert("NOT_SUPPORTED_CHAIN_ID");
         }
