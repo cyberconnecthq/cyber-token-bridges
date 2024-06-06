@@ -7,15 +7,20 @@ contract DeploySetting {
         address deployerContract;
         address protocolOwner;
         address cyberToken;
-        address lzEndpoint;
         uint32 eid;
         address lzController;
         address cyberStakingPool;
         address cyberVault;
         address withdrawer;
+        address treasury;
+        // lz related
+        address lzPolyhedraDVN;
+        address lzLabsDVN;
+        address lzEndpoint;
         address lzSendLib;
         address lzReceiveLib;
-        address treasury;
+        uint64 confirmations;
+        uint128 enforcedGas;
     }
 
     mapping(uint256 => DeployParameters) internal deployParams;
@@ -115,8 +120,12 @@ contract DeploySetting {
                 .lzSendLib = 0xC39161c743D0307EB9BCc9FEF03eeb9Dc4802de7;
             deployParams[CYBER]
                 .lzReceiveLib = 0xe1844c5D63a9543023008D332Bd3d2e6f1FE1043;
-            // deployParams[CYBER]
-            //     .cyberVault = 0xFE789B66AD470dd8DD961a6fB3F8aD941B2c79c1;
+            deployParams[CYBER]
+                .lzLabsDVN = 0x6788f52439ACA6BFF597d3eeC2DC9a44B8FEE842;
+            deployParams[CYBER]
+                .lzPolyhedraDVN = 0x8ddF05F9A5c488b4973897E278B58895bF87Cb24;
+            deployParams[CYBER].confirmations = 20;
+            deployParams[CYBER].enforcedGas = 65000;
         }
 
         {
@@ -135,6 +144,12 @@ contract DeploySetting {
                 .lzSendLib = 0xbB2Ea70C9E858123480642Cf96acbcCE1372dCe1;
             deployParams[ETH]
                 .lzReceiveLib = 0xc02Ab410f0734EFa3F14628780e6e695156024C2;
+            deployParams[ETH]
+                .lzLabsDVN = 0x589dEDbD617e0CBcB916A9223F4d1300c294236b;
+            deployParams[ETH]
+                .lzPolyhedraDVN = 0x8ddF05F9A5c488b4973897E278B58895bF87Cb24;
+            deployParams[ETH].confirmations = 15;
+            deployParams[ETH].enforcedGas = 100000;
         }
 
         {
@@ -153,6 +168,12 @@ contract DeploySetting {
                 .lzSendLib = 0x1322871e4ab09Bc7f5717189434f97bBD9546e95;
             deployParams[OPTIMISM]
                 .lzReceiveLib = 0x3c4962Ff6258dcfCafD23a814237B7d6Eb712063;
+            deployParams[OPTIMISM]
+                .lzLabsDVN = 0x6A02D83e8d433304bba74EF1c427913958187142;
+            deployParams[OPTIMISM]
+                .lzPolyhedraDVN = 0x8ddF05F9A5c488b4973897E278B58895bF87Cb24;
+            deployParams[OPTIMISM].confirmations = 20;
+            deployParams[OPTIMISM].enforcedGas = 65000;
         }
 
         {
@@ -171,6 +192,12 @@ contract DeploySetting {
                 .lzSendLib = 0x9F8C645f2D0b2159767Bd6E0839DE4BE49e823DE;
             deployParams[BNB]
                 .lzReceiveLib = 0xB217266c3A98C8B2709Ee26836C98cf12f6cCEC1;
+            deployParams[BNB]
+                .lzLabsDVN = 0xfD6865c841c2d64565562fCc7e05e619A30615f0;
+            deployParams[BNB]
+                .lzPolyhedraDVN = 0x8ddF05F9A5c488b4973897E278B58895bF87Cb24;
+            deployParams[BNB].confirmations = 20;
+            deployParams[BNB].enforcedGas = 65000;
         }
     }
 }

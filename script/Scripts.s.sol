@@ -28,7 +28,6 @@ contract TempScript is Script, DeploySetting {
     function run() external {
         _setDeployParams();
         vm.startBroadcast();
-
         vm.stopBroadcast();
     }
 }
@@ -76,7 +75,8 @@ contract GetOappConfog is Script, DeploySetting {
     }
 }
 
-contract SetOappConfog is Script, DeploySetting {
+contract SetOappConfig is Script, DeploySetting {
+    using OptionsBuilder for bytes;
     // the formal properties are documented in the setter functions
     struct UlnConfig {
         uint64 confirmations;
@@ -88,103 +88,116 @@ contract SetOappConfog is Script, DeploySetting {
         address[] optionalDVNs; // no duplicates. sorted an an ascending order. allowed overlap with requiredDVNs
     }
 
+    function setupMsgLibParam(
+        uint256 srcChainId,
+        uint256 dstChainId,
+        uint64 confirmations
+    ) private view returns (SetConfigParam[] memory) {
+        SetConfigParam[] memory params = new SetConfigParam[](1);
+        address[] memory requiredDVNs = new address[](2);
+        // sort DVNs in ascending order
+        address lzLabsDVN = deployParams[srcChainId].lzLabsDVN;
+        address lzPolyhedraDVN = deployParams[srcChainId].lzPolyhedraDVN;
+        if (lzLabsDVN < lzPolyhedraDVN) {
+            requiredDVNs[0] = lzLabsDVN;
+            requiredDVNs[1] = lzPolyhedraDVN;
+        } else {
+            requiredDVNs[0] = lzPolyhedraDVN;
+            requiredDVNs[1] = lzLabsDVN;
+        }
+        params[0] = SetConfigParam(
+            deployParams[dstChainId].eid,
+            2, // CONFIG_TYPE_ULN
+            abi.encode(
+                UlnConfig(
+                    confirmations, // confirmations
+                    2, // requiredDVNCount
+                    0, // optionalDVNCount
+                    0, // optionalDVNThreshold
+                    requiredDVNs,
+                    new address[](0)
+                )
+            )
+        );
+        return params;
+    }
+
     function run() external {
         _setDeployParams();
         vm.startBroadcast();
 
-        if (block.chainid == DeploySetting.BNB) {
-            // SetConfigParam[] memory sendParams = new SetConfigParam[](1);
-            // address[] memory requiredDVNs = new address[](2);
-            // requiredDVNs[0] = 0x8ddF05F9A5c488b4973897E278B58895bF87Cb24;
-            // requiredDVNs[1] = 0xfD6865c841c2d64565562fCc7e05e619A30615f0;
-            // sendParams[0] = SetConfigParam(
-            //     deployParams[CYBER].eid,
-            //     2, // CONFIG_TYPE_ULN
-            //     abi.encode(
-            //         UlnConfig(
-            //             20, // confirmations
-            //             2, // requiredDVNCount
-            //             0, // optionalDVNCount
-            //             0, // optionalDVNThreshold
-            //             requiredDVNs,
-            //             new address[](0)
-            //         )
-            //     )
-            // );
+        if (
+            block.chainid == DeploySetting.BNB ||
+            block.chainid == DeploySetting.ETH ||
+            block.chainid == DeploySetting.OPTIMISM ||
+            block.chainid == DeploySetting.CYBER
+        ) {
+            uint256 srcChainId = block.chainid;
+            uint256[4] memory dstChainIds = [
+                DeploySetting.ETH,
+                DeploySetting.BNB,
+                DeploySetting.OPTIMISM,
+                DeploySetting.CYBER
+            ];
 
-            // ILayerZeroEndpointV2(deployParams[block.chainid].lzEndpoint)
-            //     .setConfig(
-            //         0x0C04e2354c913197EBB1D2D3406dD406F68a227d,
-            //         deployParams[block.chainid].lzSendLib,
-            //         sendParams
-            //     );
+            for (uint256 i = 0; i < dstChainIds.length; i++) {
+                uint256 dstChainId = dstChainIds[i];
+                if (srcChainId == dstChainId) {
+                    continue;
+                }
+                DeployParameters memory srcChainParams = deployParams[
+                    srcChainId
+                ];
+                DeployParameters memory dstChainParams = deployParams[
+                    dstChainId
+                ];
 
-            SetConfigParam[] memory receiveParams = new SetConfigParam[](1);
-            address[] memory requiredDVNs = new address[](1);
-            requiredDVNs[0] = 0xfD6865c841c2d64565562fCc7e05e619A30615f0;
-            receiveParams[0] = SetConfigParam(
-                deployParams[CYBER].eid,
-                2, // CONFIG_TYPE_ULN
-                abi.encode(
-                    UlnConfig(
-                        20, // confirmations
-                        1, // requiredDVNCount
-                        0, // optionalDVNCount
-                        0, // optionalDVNThreshold
-                        requiredDVNs,
-                        new address[](0)
-                    )
-                )
-            );
+                // set send dvn
+                SetConfigParam[] memory sendParams = setupMsgLibParam(
+                    srcChainId,
+                    dstChainId,
+                    srcChainParams.confirmations
+                );
+                ILayerZeroEndpointV2(srcChainParams.lzEndpoint).setConfig(
+                    srcChainParams.lzController,
+                    srcChainParams.lzSendLib,
+                    sendParams
+                );
 
-            ILayerZeroEndpointV2(deployParams[block.chainid].lzEndpoint)
-                .setConfig(
-                    0x0C04e2354c913197EBB1D2D3406dD406F68a227d,
-                    deployParams[block.chainid].lzReceiveLib,
+                // set receive dvn
+                SetConfigParam[] memory receiveParams = setupMsgLibParam(
+                    srcChainId,
+                    dstChainId,
+                    dstChainParams.confirmations
+                );
+
+                ILayerZeroEndpointV2(srcChainParams.lzEndpoint).setConfig(
+                    srcChainParams.lzController,
+                    srcChainParams.lzReceiveLib,
                     receiveParams
                 );
-            // IOAppCore(0x0C04e2354c913197EBB1D2D3406dD406F68a227d).setPeer(
-            //     deployParams[CYBER].eid,
-            //     bytes32(
-            //         uint256(uint160(0x4824F04e8F9d32e6533948E22535a3f23420b601))
-            //     )
-            // );
-        } else if (block.chainid == DeploySetting.CYBER) {
-            SetConfigParam[] memory params = new SetConfigParam[](1);
-            address[] memory requiredDVNs = new address[](1);
-            requiredDVNs[0] = 0x6788f52439ACA6BFF597d3eeC2DC9a44B8FEE842;
-            params[0] = SetConfigParam(
-                deployParams[BNB].eid,
-                2, // CONFIG_TYPE_ULN
-                abi.encode(
-                    UlnConfig(
-                        20, // confirmations
-                        1, // requiredDVNCount
-                        0, // optionalDVNCount
-                        0, // optionalDVNThreshold
-                        requiredDVNs,
-                        new address[](0)
-                    )
-                )
-            );
-            ILayerZeroEndpointV2(deployParams[block.chainid].lzEndpoint)
-                .setConfig(
-                    0x4824F04e8F9d32e6533948E22535a3f23420b601,
-                    deployParams[block.chainid].lzReceiveLib,
-                    params
+
+                // set peer
+                IOAppCore(srcChainParams.lzController).setPeer(
+                    dstChainParams.eid,
+                    bytes32(uint256(uint160(dstChainParams.lzController)))
                 );
-            ILayerZeroEndpointV2(deployParams[block.chainid].lzEndpoint)
-                .setConfig(
-                    0x4824F04e8F9d32e6533948E22535a3f23420b601,
-                    deployParams[block.chainid].lzSendLib,
-                    params
+
+                // enforced options
+                bytes memory receiveOption = OptionsBuilder
+                    .newOptions()
+                    .addExecutorLzReceiveOption(dstChainParams.enforcedGas, 0);
+                EnforcedOptionParam[]
+                    memory enforcedOptions = new EnforcedOptionParam[](1);
+                enforcedOptions[0] = EnforcedOptionParam(
+                    dstChainParams.eid,
+                    1, // SEND
+                    receiveOption
                 );
-            // IOAppCore(0x4824F04e8F9d32e6533948E22535a3f23420b601).setPeer(
-            //     deployParams[BNB].eid,
-            //     bytes32(
-            //         uint256(uint160(0x0C04e2354c913197EBB1D2D3406dD406F68a227d))
-            //     )
-            // );
+                OFTCore(srcChainParams.lzController).setEnforcedOptions(
+                    enforcedOptions
+                );
+            }
         } else {
             revert("CHAIN_ID_NOT_SUPPORTED");
         }
@@ -250,53 +263,6 @@ contract DeployController is Script, DeploySetting {
                     LibDeploy.SALT
                 );
             LibDeploy._write(vm, "CyberTokenController", adapter);
-        } else {
-            revert("NOT_SUPPORTED_CHAIN_ID");
-        }
-
-        vm.stopBroadcast();
-    }
-}
-
-contract ConfigOApp is Script, DeploySetting {
-    using OptionsBuilder for bytes;
-    function run() external {
-        _setDeployParams();
-        vm.startBroadcast();
-
-        if (
-            block.chainid == DeploySetting.SEPOLIA ||
-            block.chainid == DeploySetting.BNBT ||
-            block.chainid == DeploySetting.CYBER_TESTNET
-        ) {
-            DeployParameters memory fromChainParams = deployParams[
-                block.chainid
-            ];
-            DeployParameters memory toChainParams = deployParams[
-                DeploySetting.BNBT
-            ];
-            OFTCore(fromChainParams.lzController).setPeer(
-                toChainParams.eid,
-                bytes32(uint256(uint160(toChainParams.lzController)))
-            );
-            bytes memory receiveOption = OptionsBuilder
-                .newOptions()
-                .addExecutorLzReceiveOption(150000, 0);
-            EnforcedOptionParam[]
-                memory enforcedOptions = new EnforcedOptionParam[](2);
-            enforcedOptions[0] = EnforcedOptionParam(
-                toChainParams.eid,
-                1, // SEND
-                receiveOption
-            );
-            enforcedOptions[1] = EnforcedOptionParam(
-                toChainParams.eid,
-                2, // SEND_AND_CALL
-                receiveOption
-            );
-            OFTCore(fromChainParams.lzController).setEnforcedOptions(
-                enforcedOptions
-            );
         } else {
             revert("NOT_SUPPORTED_CHAIN_ID");
         }
