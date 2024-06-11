@@ -95,13 +95,13 @@ contract DeploySetting {
                 .lzController = 0xfd522AE1Cec35a85237D1CddbfFeBe65E49eFb98;
             deployParams[CYBER_TESTNET].eid = 40280;
             deployParams[CYBER_TESTNET]
-                .cyberStakingPool = 0xB38c28dBEDeF25030e51FFdd5d5a418B9eDc7996;
+                .cyberStakingPool = 0x8577aD3Da02e34315C76dFcD66EA70dFFE75e742;
             deployParams[CYBER_TESTNET]
-                .cyberVault = 0x733a971b1cF77Cd5DAD98F7E1A433aD1b86B12EA;
+                .cyberVault = 0x580278859B01BFdc303ca80B36bE364b438105D6;
             deployParams[CYBER_TESTNET]
                 .treasury = 0x7884f7F04F994da14302a16Cf15E597e31eebECf;
             deployParams[CYBER_TESTNET]
-                .withdrawer = 0x40a80c46f8DF76E50E67DE7A74889AfFC89279c9;
+                .withdrawer = 0x06A7794454934437E0C66788863afb379487C681;
         }
 
         {
