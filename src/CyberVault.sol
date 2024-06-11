@@ -9,7 +9,6 @@ import { ERC20VotesUpgradeable } from "@openzeppelin/contracts-upgradeable/token
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import { ERC4626Upgradeable, Math } from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC4626Upgradeable.sol";
 import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
-import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
@@ -28,7 +27,6 @@ struct LockAmount {
 contract CyberVault is
     ERC4626Upgradeable,
     ERC20VotesUpgradeable,
-    PausableUpgradeable,
     OwnableUpgradeable,
     UUPSUpgradeable
 {
@@ -81,7 +79,6 @@ contract CyberVault is
         __ERC20_init("Compound CYBER", "cCYBER");
         __EIP712_init("Compound CYBER", "1");
         __Ownable_init(_owner);
-        __Pausable_init();
 
         protocolFeeTreasury = _protocolFeeTreasury;
         cyberStakingPool = ICyberStakingPool(_stakingPool);
@@ -135,6 +132,7 @@ contract CyberVault is
         uint256 assets,
         address receiver
     ) public override returns (uint256) {
+        require(receiver != address(0), "INVALID_RECEIVER");
         claim();
         uint256 maxAssets = maxDeposit(receiver);
         require(assets <= maxAssets, "EXCEED_MAX_DEPOSIT");
@@ -149,6 +147,7 @@ contract CyberVault is
         uint256 shares,
         address receiver
     ) public override returns (uint256) {
+        require(receiver != address(0), "INVALID_RECEIVER");
         claim();
         uint256 maxShares = maxMint(receiver);
         require(shares <= maxShares, "EXCEED_MAX_MINT");
@@ -164,6 +163,7 @@ contract CyberVault is
         address receiver,
         address _owner
     ) public override returns (uint256) {
+        require(receiver != address(0), "INVALID_RECEIVER");
         LockAmount memory lockAmount = _lockAmounts[_owner];
         require(assets == lockAmount.lockedAssets, "INVALID_ASSETS");
         _withdraw(
@@ -182,6 +182,7 @@ contract CyberVault is
         address receiver,
         address _owner
     ) public override returns (uint256) {
+        require(receiver != address(0), "INVALID_RECEIVER");
         LockAmount memory lockAmount = _lockAmounts[_owner];
         require(shares == lockAmount.lockedShares, "INVALID_SHARES");
         _withdraw(
