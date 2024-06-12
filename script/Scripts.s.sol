@@ -226,12 +226,11 @@ contract SetOappConfig is Script, DeploySetting {
                 ];
 
                 // set send dvn
-                // SetConfigParam[]
-                //     memory sendParams = setupMsgLibOneOutOfOneParam(
-                //         srcChainId,
-                //         dstChainId,
-                //         srcChainParams.confirmations
-                //     );
+                // SetConfigParam[] memory sendParams = setupMsgLibParam(
+                //     srcChainId,
+                //     dstChainId,
+                //     srcChainParams.confirmations
+                // );
                 // ILayerZeroEndpointV2(srcChainParams.lzEndpoint).setConfig(
                 //     srcChainParams.lzController,
                 //     srcChainParams.lzSendLib,
@@ -239,12 +238,11 @@ contract SetOappConfig is Script, DeploySetting {
                 // );
 
                 // set receive dvn
-                SetConfigParam[]
-                    memory receiveParams = setupMsgLibOneOutOfOneParam(
-                        srcChainId,
-                        dstChainId,
-                        dstChainParams.confirmations
-                    );
+                SetConfigParam[] memory receiveParams = setupMsgLibParam(
+                    srcChainId,
+                    dstChainId,
+                    dstChainParams.confirmations
+                );
 
                 ILayerZeroEndpointV2(srcChainParams.lzEndpoint).setConfig(
                     srcChainParams.lzController,
@@ -410,7 +408,7 @@ contract TestBridge is Script, DeploySetting {
                     dstChainId
                 ];
 
-                uint256 amountToBridge = 1 ether + 1 wei;
+                uint256 amountToBridge = 0.01 ether;
                 SendParam memory sendParam = SendParam(
                     dstChainParams.eid,
                     bytes32(uint256(uint160(msg.sender))),
@@ -425,6 +423,7 @@ contract TestBridge is Script, DeploySetting {
                     srcChainParams.lzController
                 ).quoteSend(sendParam, false);
 
+                console.log(msgFee.nativeFee);
                 // eth
                 require(msgFee.nativeFee <= 0.003 ether, "TOO_HIGH_FEE");
                 // bsc
@@ -478,7 +477,10 @@ contract DeployWithdrawer is Script, DeploySetting {
         if (
             block.chainid == DeploySetting.BNBT ||
             block.chainid == DeploySetting.OP_SEPOLIA ||
-            block.chainid == DeploySetting.SEPOLIA
+            block.chainid == DeploySetting.SEPOLIA ||
+            block.chainid == DeploySetting.BNB ||
+            block.chainid == DeploySetting.OPTIMISM ||
+            block.chainid == DeploySetting.ETH
         ) {
             address withdrawer = Create2Deployer(
                 deployParams[block.chainid].deployerContract
@@ -489,9 +491,9 @@ contract DeployWithdrawer is Script, DeploySetting {
                             deployParams[block.chainid].protocolOwner, // owner
                             deployParams[block.chainid].cyberToken, // cyber token
                             bytes32(
-                                0x5b982cbc0aaa3c4a565587cbe7fdf90ec7fdcf1a7dd1c99f8c4b80246a1f3826
+                                0x7c5174cc95a1f561633cf7303d210630f707de560c7814363155fc2df6b4474e
                             ), // merkle root
-                            deployParams[block.chainid].protocolOwner // bridge recipient
+                            deployParams[block.chainid].treasury // bridge recipient
                         )
                     ),
                     LibDeploy.SALT

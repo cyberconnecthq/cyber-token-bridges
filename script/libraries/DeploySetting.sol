@@ -126,6 +126,8 @@ contract DeploySetting {
                 .lzPolyhedraDVN = 0x8ddF05F9A5c488b4973897E278B58895bF87Cb24;
             deployParams[CYBER].confirmations = 20;
             deployParams[CYBER].enforcedGas = 100000;
+            deployParams[CYBER]
+                .treasury = 0x0793811Ee06942bAcAb7BD28669D810dE62487B6;
         }
 
         {
@@ -150,6 +152,8 @@ contract DeploySetting {
                 .lzPolyhedraDVN = 0x8ddF05F9A5c488b4973897E278B58895bF87Cb24;
             deployParams[ETH].confirmations = 15;
             deployParams[ETH].enforcedGas = 65000;
+            deployParams[ETH]
+                .treasury = 0x455DB34c99A866489F3ac63fa2F068c726BC286b;
         }
 
         {
@@ -174,6 +178,8 @@ contract DeploySetting {
                 .lzPolyhedraDVN = 0x8ddF05F9A5c488b4973897E278B58895bF87Cb24;
             deployParams[OPTIMISM].confirmations = 20;
             deployParams[OPTIMISM].enforcedGas = 100000;
+            deployParams[OPTIMISM]
+                .treasury = 0x2f199646760aE75d423F4E98bb5249207ED1DC15;
         }
 
         {
@@ -198,6 +204,8 @@ contract DeploySetting {
                 .lzPolyhedraDVN = 0x8ddF05F9A5c488b4973897E278B58895bF87Cb24;
             deployParams[BNB].confirmations = 20;
             deployParams[BNB].enforcedGas = 100000;
+            deployParams[BNB]
+                .treasury = 0x4729A8F1FEc3b1353a751ce0143Fb16d119f706a;
         }
     }
 }
