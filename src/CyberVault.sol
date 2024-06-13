@@ -62,6 +62,7 @@ contract CyberVault is
     uint256 public protocolFeeBps;
     address public protocolFeeTreasury;
     mapping(address => LockAmount) internal _lockAmounts;
+    uint256 public protocolLockedAmount;
 
     /*//////////////////////////////////////////////////////////////
                         CONSTRUCTOR & INITIALIZER
@@ -98,9 +99,22 @@ contract CyberVault is
     function totalAssets() public view override returns (uint256) {
         return
             cyberStakingPool.balanceOf(address(this)) +
-            cyberStakingPool.lockedAmountByUser(address(this)) +
             cyberStakingPool.claimableAllRewards(address(this)) +
             IERC20(asset()).balanceOf(address(this));
+    }
+
+    /** @dev See {IERC4626-convertToShares}. */
+    function convertToShares(
+        uint256 assets
+    ) public view override returns (uint256 shares) {
+        return _convertToShares(assets, Math.Rounding.Floor, true);
+    }
+
+    /** @dev See {IERC4626-convertToAssets}. */
+    function convertToAssets(
+        uint256 shares
+    ) public view override returns (uint256 assets) {
+        return _convertToAssets(shares, Math.Rounding.Floor, true);
     }
 
     /** @dev See {IERC4626-previewDeposit}. */
@@ -213,6 +227,7 @@ contract CyberVault is
             "LOCKED_PERIOD_NOT_ENDED"
         );
         require(lockAmount.lockedShares >= shares, "INSUFFICIENT_BALANCE");
+        protocolLockedAmount -= shares;
         delete _lockAmounts[_owner];
 
         if (caller != _owner) {
@@ -333,6 +348,14 @@ contract CyberVault is
     }
 
     /*//////////////////////////////////////////////////////////////
+                            PUBLIC
+    //////////////////////////////////////////////////////////////*/
+
+    function circulatingSupply() public view returns (uint256) {
+        return totalSupply() - protocolLockedAmount;
+    }
+
+    /*//////////////////////////////////////////////////////////////
                             ONLY OWNER
     //////////////////////////////////////////////////////////////*/
     function setLockDuration(uint256 _lockDuration) external onlyOwner {
@@ -373,6 +396,7 @@ contract CyberVault is
         lockAmount.lockedShares += shares;
         lockAmount.lockedAssets += assets;
         lockAmount.lockEnd = block.timestamp + lockDuration;
+        protocolLockedAmount += shares;
 
         _lockAmounts[msg.sender] = lockAmount;
 
@@ -399,7 +423,7 @@ contract CyberVault is
         }
         return
             assets.mulDiv(
-                totalSupply() + 10 ** _decimalsOffset(),
+                circulatingSupply() + 10 ** _decimalsOffset(),
                 totalAssets_ + 1,
                 rounding
             );
@@ -419,7 +443,7 @@ contract CyberVault is
         return
             shares.mulDiv(
                 totalAssets_ + 1,
-                totalSupply() + 10 ** _decimalsOffset(),
+                circulatingSupply() + 10 ** _decimalsOffset(),
                 rounding
             );
     }
@@ -432,7 +456,6 @@ contract CyberVault is
             claimable -
             protocolFee +
             cyberStakingPool.balanceOf(address(this)) +
-            cyberStakingPool.lockedAmountByUser(address(this)) +
             IERC20(asset()).balanceOf(address(this));
     }
 
