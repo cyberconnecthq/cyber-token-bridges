@@ -43,6 +43,8 @@ abstract contract RewardDistribution is
         uint40 startTime_,
         uint40 endTime_
     ) external onlyOwner onlyValidDistributionEndTime(endTime_) {
+        require(emissionPerSecond_ > 0, "INVALID_EMISSION_RATE");
+
         require(
             startTime_ > block.timestamp,
             "INVALID_DISTRIBUTION_START_TIME"
@@ -58,6 +60,13 @@ abstract contract RewardDistribution is
         distribution.emissionPerSecond = emissionPerSecond_;
         distribution.startTime = startTime_;
         distribution.endTime = endTime_;
+
+        emit DistributionCreated(
+            distributionId,
+            emissionPerSecond_,
+            startTime_,
+            endTime_
+        );
     }
 
     /// @inheritdoc IRewardDistribution
@@ -73,6 +82,7 @@ abstract contract RewardDistribution is
         );
 
         distribution.endTime = endTime;
+        emit DistributionEndTimeUpdated(distributionId, endTime);
     }
 
     /// @inheritdoc IRewardDistribution
@@ -98,20 +108,20 @@ abstract contract RewardDistribution is
     /// @param distributionId Identifier for the specific distribution.
     /// @param currentIndex The current index reflecting the accumulated distribution up to the last update.
     /// @param lastUpdateTimestamp_ Timestamp of the last update, used to calculate time elapsed.
-    /// @param totalSupply The total token supply.
-    /// @return The updated index, or the current index if conditions prevent recalculation (e.g., no time elapsed, emission rate or total supply is zero, outside distribution period).
+    /// @param circulatingSupply The circulating token supply.
+    /// @return The updated index, or the current index if conditions prevent recalculation (e.g., no time elapsed, emission rate or circulating supply is zero, outside distribution period).
     function _getDistributionIndex(
         uint16 distributionId,
         uint256 currentIndex,
         uint40 lastUpdateTimestamp_,
-        uint256 totalSupply
+        uint256 circulatingSupply
     ) internal view returns (uint256) {
         DistributionData storage distribution = distributions[distributionId];
         if (
             // slither-disable-next-line incorrect-equality
             lastUpdateTimestamp_ == block.timestamp ||
             distribution.emissionPerSecond == 0 ||
-            totalSupply == 0 ||
+            circulatingSupply == 0 ||
             block.timestamp < distribution.startTime ||
             lastUpdateTimestamp_ >= distribution.endTime
         ) {
@@ -126,7 +136,7 @@ abstract contract RewardDistribution is
 
         uint256 newIndex = (distribution.emissionPerSecond *
             timeDelta *
-            PRECISION_FACTOR) / totalSupply;
+            PRECISION_FACTOR) / circulatingSupply;
 
         return newIndex + currentIndex;
     }

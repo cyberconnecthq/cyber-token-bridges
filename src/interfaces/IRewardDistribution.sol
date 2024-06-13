@@ -40,6 +40,28 @@ interface IRewardDistribution {
         uint256 index
     );
 
+    /// @notice Indicates a new distribution was created
+    /// @dev This event should be emitted when a new distribution is created
+    /// @param distributionID The ID of the new distribution
+    /// @param emissionPerSecond The amount of reward token emitted per second
+    /// @param startTime The start time of the distribution in UNIX timestamp
+    /// @param endTime The end time of the distribution in UNIX timestamp
+    event DistributionCreated(
+        uint256 indexed distributionID,
+        uint128 emissionPerSecond,
+        uint40 startTime,
+        uint40 endTime
+    );
+
+    /// @notice Indicates the end time of a distribution was updated
+    /// @dev This event should be emitted when the end time of a distribution is updated
+    /// @param distributionID The ID of the distribution being updated
+    /// @param endTime The new end time for the distribution
+    event DistributionEndTimeUpdated(
+        uint256 indexed distributionID,
+        uint40 endTime
+    );
+
     ////////////////
     // Functions
     ////////////////
