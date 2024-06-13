@@ -46,10 +46,11 @@ contract DeploySetting {
             deployParams[SEPOLIA]
                 .lzEndpoint = 0x6EDCE65403992e310A62460808c4b910D972f10f;
             deployParams[SEPOLIA]
-                .lzController = 0x12E4147A0C8d8d00eb3Eeb30Df3a089aB0420000;
+                .lzController = 0x2C251296AFb9385CFf7AbC8Bcd5C6F54b38b9B51;
             deployParams[SEPOLIA].eid = 40161;
             deployParams[SEPOLIA]
                 .withdrawer = 0x4A973F53A72Fd16bc37d23F77b105baFC4c4B873;
+            deployParams[SEPOLIA].enforcedGas = 65000;
         }
 
         {
@@ -64,6 +65,16 @@ contract DeploySetting {
             deployParams[OP_SEPOLIA].eid = 40232;
             deployParams[OP_SEPOLIA]
                 .withdrawer = 0x3562C0b0eD286Cca224440b00a9631Dac7749422;
+            deployParams[OP_SEPOLIA]
+                .lzController = 0x195eB2439CEDd006adc760A14CbA1663Ff353d24;
+            deployParams[OP_SEPOLIA]
+                .lzSendLib = 0xB31D2cb502E25B30C651842C7C3293c51Fe6d16f;
+            deployParams[OP_SEPOLIA]
+                .lzReceiveLib = 0x9284fd59B95b9143AF0b9795CAC16eb3C723C9Ca;
+            deployParams[OP_SEPOLIA]
+                .lzLabsDVN = 0xd680ec569f269aa7015F7979b4f1239b5aa4582C;
+            deployParams[OP_SEPOLIA].enforcedGas = 100000;
+            deployParams[OP_SEPOLIA].confirmations = 20;
         }
 
         {
@@ -72,14 +83,15 @@ contract DeploySetting {
             deployParams[BNBT]
                 .protocolOwner = 0x7884f7F04F994da14302a16Cf15E597e31eebECf;
             deployParams[BNBT]
-                .cyberToken = 0xdb359A83ff0B91551161f12e9C5454CC04FA2fCc;
+                .cyberToken = 0xf3b3eeBb542808487A464C38a1462Bf93c1bF1a8;
             deployParams[BNBT]
                 .lzEndpoint = 0x6EDCE65403992e310A62460808c4b910D972f10f;
             deployParams[BNBT]
-                .lzController = 0xD610b93C19e87b7C3039bc8DA906a233aD85386b;
+                .lzController = 0x0DD60dA738ed56682d816D8d6925FaBBF8e6D44B;
             deployParams[BNBT].eid = 40102;
             deployParams[BNBT]
                 .withdrawer = 0x7E28D6e5108c702A9424a5AdAF03bBA57dFf7C61;
+            deployParams[BNBT].enforcedGas = 100000;
         }
 
         {
@@ -88,11 +100,15 @@ contract DeploySetting {
             deployParams[CYBER_TESTNET]
                 .protocolOwner = 0x7884f7F04F994da14302a16Cf15E597e31eebECf;
             deployParams[CYBER_TESTNET]
-                .cyberToken = 0x3F0Cabe797a717A2ca97072942D66065BCF56dDC;
+                .cyberToken = 0x817C122fb22560A9Ecfd0e20E0c7FC99eBd9da0D;
             deployParams[CYBER_TESTNET]
                 .lzEndpoint = 0x6EDCE65403992e310A62460808c4b910D972f10f;
             deployParams[CYBER_TESTNET]
-                .lzController = 0xfd522AE1Cec35a85237D1CddbfFeBe65E49eFb98;
+                .lzController = 0xeADe18d33dc4Ab38BABEf85a10aDf3bac38D9833;
+            deployParams[CYBER_TESTNET]
+                .lzSendLib = 0x45841dd1ca50265Da7614fC43A361e526c0e6160;
+            deployParams[CYBER_TESTNET]
+                .lzReceiveLib = 0xd682ECF100f6F4284138AA925348633B0611Ae21;
             deployParams[CYBER_TESTNET].eid = 40280;
             deployParams[CYBER_TESTNET]
                 .cyberStakingPool = 0x8577aD3Da02e34315C76dFcD66EA70dFFE75e742;
@@ -102,6 +118,10 @@ contract DeploySetting {
                 .treasury = 0x7884f7F04F994da14302a16Cf15E597e31eebECf;
             deployParams[CYBER_TESTNET]
                 .withdrawer = 0x06A7794454934437E0C66788863afb379487C681;
+            deployParams[CYBER_TESTNET]
+                .lzLabsDVN = 0x88B27057A9e00c5F05DDa29241027afF63f9e6e0;
+            deployParams[CYBER_TESTNET].enforcedGas = 100000;
+            deployParams[CYBER_TESTNET].confirmations = 20;
         }
 
         {
@@ -114,7 +134,7 @@ contract DeploySetting {
             deployParams[CYBER]
                 .lzEndpoint = 0x1a44076050125825900e736c501f859c50fE728c;
             deployParams[CYBER]
-                .lzController = 0x0644076B2100ad7200e63141101870FC948DcA7f;
+                .lzController = 0x9A9D5a29206Dde4F70825032dF32333De5f63921;
             deployParams[CYBER].eid = 30283;
             deployParams[CYBER]
                 .lzSendLib = 0xC39161c743D0307EB9BCc9FEF03eeb9Dc4802de7;
@@ -141,7 +161,7 @@ contract DeploySetting {
                 .lzEndpoint = 0x1a44076050125825900e736c501f859c50fE728c;
             deployParams[ETH].eid = 30101;
             deployParams[ETH]
-                .lzController = 0x3d2fe83ea885C2E43A422C82C738847669708210;
+                .lzController = 0xCB07992DE144bDeE56fDb66Fff2454B43243b052;
             deployParams[ETH]
                 .lzSendLib = 0xbB2Ea70C9E858123480642Cf96acbcCE1372dCe1;
             deployParams[ETH]
@@ -167,7 +187,7 @@ contract DeploySetting {
                 .lzEndpoint = 0x1a44076050125825900e736c501f859c50fE728c;
             deployParams[OPTIMISM].eid = 30111;
             deployParams[OPTIMISM]
-                .lzController = 0x0644076B2100ad7200e63141101870FC948DcA7f;
+                .lzController = 0x9A9D5a29206Dde4F70825032dF32333De5f63921;
             deployParams[OPTIMISM]
                 .lzSendLib = 0x1322871e4ab09Bc7f5717189434f97bBD9546e95;
             deployParams[OPTIMISM]
@@ -193,7 +213,7 @@ contract DeploySetting {
                 .lzEndpoint = 0x1a44076050125825900e736c501f859c50fE728c;
             deployParams[BNB].eid = 30102;
             deployParams[BNB]
-                .lzController = 0x0644076B2100ad7200e63141101870FC948DcA7f;
+                .lzController = 0x9A9D5a29206Dde4F70825032dF32333De5f63921;
             deployParams[BNB]
                 .lzSendLib = 0x9F8C645f2D0b2159767Bd6E0839DE4BE49e823DE;
             deployParams[BNB]

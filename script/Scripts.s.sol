@@ -32,7 +32,7 @@ contract TempScript is Script, DeploySetting {
     }
 }
 
-contract GetOappConfog is Script, DeploySetting {
+contract GetOappConfig is Script, DeploySetting {
     // the formal properties are documented in the setter functions
     struct UlnConfig {
         uint64 confirmations;
@@ -54,7 +54,7 @@ contract GetOappConfog is Script, DeploySetting {
                 deployParams[block.chainid].lzController,
                 deployParams[block.chainid].lzReceiveLib,
                 // deployParams[block.chainid].lzSendLib,
-                deployParams[DeploySetting.BNB].eid,
+                deployParams[DeploySetting.OP_SEPOLIA].eid,
                 2 // CONFIG_TYPE_ULN
             );
         console.logBytes(config);
@@ -206,11 +206,11 @@ contract SetOappConfig is Script, DeploySetting {
             block.chainid == DeploySetting.CYBER
         ) {
             uint256 srcChainId = block.chainid;
-            uint256[1] memory dstChainIds = [
-                // DeploySetting.ETH,
-                // DeploySetting.BNB,
-                DeploySetting.OPTIMISM
-                // DeploySetting.CYBER
+            uint256[4] memory dstChainIds = [
+                DeploySetting.ETH,
+                DeploySetting.BNB,
+                DeploySetting.OPTIMISM,
+                DeploySetting.CYBER
             ];
 
             for (uint256 i = 0; i < dstChainIds.length; i++) {
@@ -226,16 +226,16 @@ contract SetOappConfig is Script, DeploySetting {
                 ];
 
                 // set send dvn
-                // SetConfigParam[] memory sendParams = setupMsgLibParam(
-                //     srcChainId,
-                //     dstChainId,
-                //     srcChainParams.confirmations
-                // );
-                // ILayerZeroEndpointV2(srcChainParams.lzEndpoint).setConfig(
-                //     srcChainParams.lzController,
-                //     srcChainParams.lzSendLib,
-                //     sendParams
-                // );
+                SetConfigParam[] memory sendParams = setupMsgLibParam(
+                    srcChainId,
+                    dstChainId,
+                    srcChainParams.confirmations
+                );
+                ILayerZeroEndpointV2(srcChainParams.lzEndpoint).setConfig(
+                    srcChainParams.lzController,
+                    srcChainParams.lzSendLib,
+                    sendParams
+                );
 
                 // set receive dvn
                 SetConfigParam[] memory receiveParams = setupMsgLibParam(
@@ -243,6 +243,89 @@ contract SetOappConfig is Script, DeploySetting {
                     dstChainId,
                     dstChainParams.confirmations
                 );
+
+                ILayerZeroEndpointV2(srcChainParams.lzEndpoint).setConfig(
+                    srcChainParams.lzController,
+                    srcChainParams.lzReceiveLib,
+                    receiveParams
+                );
+
+                // set peer
+                IOAppCore(srcChainParams.lzController).setPeer(
+                    dstChainParams.eid,
+                    bytes32(uint256(uint160(dstChainParams.lzController)))
+                );
+
+                // set enforced options
+                bytes memory receiveOption = OptionsBuilder
+                    .newOptions()
+                    .addExecutorLzReceiveOption(dstChainParams.enforcedGas, 0);
+                EnforcedOptionParam[]
+                    memory enforcedOptions = new EnforcedOptionParam[](1);
+                enforcedOptions[0] = EnforcedOptionParam(
+                    dstChainParams.eid,
+                    1, // SEND
+                    receiveOption
+                );
+                OFTCore(srcChainParams.lzController).setEnforcedOptions(
+                    enforcedOptions
+                );
+            }
+        } else if (
+            block.chainid == DeploySetting.OP_SEPOLIA ||
+            block.chainid == DeploySetting.SEPOLIA ||
+            block.chainid == DeploySetting.CYBER_TESTNET ||
+            block.chainid == DeploySetting.BNBT
+        ) {
+            uint256 srcChainId = block.chainid;
+            uint256[1] memory dstChainIds = [
+                // DeploySetting.SEPOLIA,
+                // DeploySetting.OP_SEPOLIA,
+                DeploySetting.CYBER_TESTNET
+                // DeploySetting.BNBT
+            ];
+
+            for (uint256 i = 0; i < dstChainIds.length; i++) {
+                uint256 dstChainId = dstChainIds[i];
+                if (srcChainId == dstChainId) {
+                    continue;
+                }
+                DeployParameters memory srcChainParams = deployParams[
+                    srcChainId
+                ];
+                DeployParameters memory dstChainParams = deployParams[
+                    dstChainId
+                ];
+
+                // set send dvn
+                SetConfigParam[]
+                    memory sendParams = setupMsgLibOneOutOfOneParam(
+                        srcChainId,
+                        dstChainId,
+                        srcChainParams.confirmations
+                    );
+
+                console.logBytes(
+                    abi.encodeWithSelector(
+                        IMessageLibManager.setConfig.selector,
+                        srcChainParams.lzController,
+                        srcChainParams.lzSendLib,
+                        sendParams
+                    )
+                );
+                ILayerZeroEndpointV2(srcChainParams.lzEndpoint).setConfig(
+                    srcChainParams.lzController,
+                    srcChainParams.lzSendLib,
+                    sendParams
+                );
+
+                // set receive dvn
+                SetConfigParam[]
+                    memory receiveParams = setupMsgLibOneOutOfOneParam(
+                        srcChainId,
+                        dstChainId,
+                        dstChainParams.confirmations
+                    );
 
                 ILayerZeroEndpointV2(srcChainParams.lzEndpoint).setConfig(
                     srcChainParams.lzController,
@@ -320,7 +403,8 @@ contract DeployController is Script, DeploySetting {
             block.chainid == DeploySetting.CYBER_TESTNET ||
             block.chainid == DeploySetting.BNB ||
             block.chainid == DeploySetting.OPTIMISM ||
-            block.chainid == DeploySetting.CYBER
+            block.chainid == DeploySetting.CYBER ||
+            block.chainid == DeploySetting.OP_SEPOLIA
         ) {
             address adapter = Create2Deployer(
                 deployParams[block.chainid].deployerContract
@@ -352,36 +436,55 @@ contract TestBridge is Script, DeploySetting {
         if (
             block.chainid == DeploySetting.SEPOLIA ||
             block.chainid == DeploySetting.CYBER_TESTNET ||
-            block.chainid == DeploySetting.BNBT
+            block.chainid == DeploySetting.BNBT ||
+            block.chainid == DeploySetting.OP_SEPOLIA
         ) {
-            DeployParameters memory fromChainParams = deployParams[
-                block.chainid
-            ];
-            DeployParameters memory toChainParams = deployParams[
+            uint256 srcChainId = block.chainid;
+            uint256[3] memory dstChainIds = [
+                DeploySetting.SEPOLIA,
+                DeploySetting.CYBER_TESTNET,
                 DeploySetting.BNBT
+                // DeploySetting.OP_SEPOLIA
             ];
+            for (uint256 i = 0; i < dstChainIds.length; i++) {
+                uint256 dstChainId = dstChainIds[i];
+                if (srcChainId == dstChainId) {
+                    continue;
+                }
+                DeployParameters memory srcChainParams = deployParams[
+                    srcChainId
+                ];
+                DeployParameters memory dstChainParams = deployParams[
+                    dstChainId
+                ];
 
-            uint256 amountToBridge = 1 ether + 1 wei;
-            SendParam memory sendParam = SendParam(
-                toChainParams.eid,
-                bytes32(uint256(uint160(msg.sender))),
-                amountToBridge,
-                amountToBridge,
-                new bytes(0),
-                new bytes(0),
-                new bytes(0)
-            );
+                uint256 amountToBridge = 10000000 ether;
+                SendParam memory sendParam = SendParam(
+                    dstChainParams.eid,
+                    bytes32(uint256(uint160(msg.sender))),
+                    amountToBridge,
+                    amountToBridge,
+                    new bytes(0),
+                    new bytes(0),
+                    new bytes(0)
+                );
 
-            MessagingFee memory msgFee = OFTCore(fromChainParams.lzController)
-                .quoteSend(sendParam, false);
+                MessagingFee memory msgFee = OFTCore(
+                    srcChainParams.lzController
+                ).quoteSend(sendParam, false);
 
-            IERC20(fromChainParams.cyberToken).approve(
-                fromChainParams.lzController,
-                amountToBridge
-            );
-            OFTCore(fromChainParams.lzController).send{
-                value: msgFee.nativeFee
-            }(sendParam, msgFee, msg.sender);
+                uint256 currentAllowed = IERC20(srcChainParams.cyberToken)
+                    .allowance(msg.sender, srcChainParams.lzController);
+                if (currentAllowed < amountToBridge) {
+                    IERC20(srcChainParams.cyberToken).approve(
+                        srcChainParams.lzController,
+                        type(uint256).max
+                    );
+                }
+                OFTCore(srcChainParams.lzController).send{
+                    value: msgFee.nativeFee
+                }(sendParam, msgFee, msg.sender);
+            }
         } else if (
             block.chainid == DeploySetting.BNB ||
             block.chainid == DeploySetting.ETH ||
@@ -679,19 +782,20 @@ contract ConfigCyberStakingPool is Script, DeploySetting {
         vm.startBroadcast();
 
         if (block.chainid == DeploySetting.CYBER_TESTNET) {
-            CyberStakingPool(deployParams[block.chainid].cyberStakingPool)
-                .setLockDuration(5 minutes);
+            // CyberStakingPool(deployParams[block.chainid].cyberStakingPool)
+            //     .setLockDuration(5 minutes);
             // CyberStakingPool(deployParams[block.chainid].cyberStakingPool)
             //     .setMinimalStakeAmount(1 ether);
-            // uint256 totalRewards = 500000 ether;
-            // uint256 startTime = 1717516800;
-            // uint256 endTime = startTime + 90 days;
-            // CyberStakingPool(deployParams[block.chainid].cyberStakingPool)
-            //     .createDistribution(
-            //         uint128(totalRewards / 90 days),
-            //         uint40(startTime),
-            //         uint40(endTime)
-            //     );
+            uint256 totalRewards = 150000 ether;
+            uint256 startTime = 1718173200 + 30 minutes;
+            uint256 duration = 1 hours;
+            uint256 endTime = startTime + duration;
+            CyberStakingPool(deployParams[block.chainid].cyberStakingPool)
+                .createDistribution(
+                    uint128(totalRewards / duration),
+                    uint40(startTime),
+                    uint40(endTime)
+                );
         } else {
             revert("NOT_SUPPORTED_CHAIN_ID");
         }

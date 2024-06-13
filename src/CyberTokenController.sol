@@ -106,10 +106,6 @@ contract CyberTokenController is OFTCore {
         return _amountLD;
     }
 
-    function sharedDecimals() public pure override returns (uint8) {
-        return 18;
-    }
-
     function transferTokenOwnership(address newOwner) external onlyOwner {
         Ownable(innerToken).transferOwnership(newOwner);
     }
