@@ -251,10 +251,10 @@ contract SetOappConfig is Script, DeploySetting {
                 );
 
                 // set peer
-                IOAppCore(srcChainParams.lzController).setPeer(
-                    dstChainParams.eid,
-                    bytes32(uint256(uint160(dstChainParams.lzController)))
-                );
+                // IOAppCore(srcChainParams.lzController).setPeer(
+                //     dstChainParams.eid,
+                //     bytes32(uint256(uint160(dstChainParams.lzController)))
+                // );
 
                 // set enforced options
                 bytes memory receiveOption = OptionsBuilder
@@ -602,7 +602,10 @@ contract DeployWithdrawer is Script, DeploySetting {
                     LibDeploy.SALT
                 );
             LibDeploy._write(vm, "LaunchTokenWithdrawer", withdrawer);
-        } else if (block.chainid == DeploySetting.CYBER_TESTNET) {
+        } else if (
+            block.chainid == DeploySetting.CYBER_TESTNET ||
+            block.chainid == DeploySetting.CYBER
+        ) {
             address withdrawer = Create2Deployer(
                 deployParams[block.chainid].deployerContract
             ).deploy(
@@ -613,7 +616,7 @@ contract DeployWithdrawer is Script, DeploySetting {
                             deployParams[block.chainid].cyberToken, // cyber token
                             deployParams[block.chainid].cyberVault, // cyber vault
                             bytes32(
-                                0x787701ccbc9901e0784d311f884298f249e9ee386c5f5097d5866d7f0c446318
+                                0xc9e90affcdbb9bfbe7ba2312b2ee0d49b4b361e77122ec358b9ce714940d4189
                             ) // merkle root
                         )
                     ),
@@ -682,7 +685,10 @@ contract DeployCyberVault is Script, DeploySetting {
         _setDeployParams();
         vm.startBroadcast();
 
-        if (block.chainid == DeploySetting.CYBER_TESTNET) {
+        if (
+            block.chainid == DeploySetting.CYBER_TESTNET ||
+            block.chainid == DeploySetting.CYBER
+        ) {
             address cyberVaultImpl = Create2Deployer(
                 deployParams[block.chainid].deployerContract
             ).deploy(
@@ -741,7 +747,10 @@ contract DeployCyberStakingPool is Script, DeploySetting {
         _setDeployParams();
         vm.startBroadcast();
 
-        if (block.chainid == DeploySetting.CYBER_TESTNET) {
+        if (
+            block.chainid == DeploySetting.CYBER_TESTNET ||
+            block.chainid == DeploySetting.CYBER
+        ) {
             address stakingPoolImpl = Create2Deployer(
                 deployParams[block.chainid].deployerContract
             ).deploy(

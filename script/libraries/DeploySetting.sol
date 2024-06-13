@@ -148,6 +148,10 @@ contract DeploySetting {
             deployParams[CYBER].enforcedGas = 100000;
             deployParams[CYBER]
                 .treasury = 0x0793811Ee06942bAcAb7BD28669D810dE62487B6;
+            deployParams[CYBER]
+                .cyberStakingPool = 0x897b968E9Ba2ec2E1b2aaac0bB9268Bc3E9BB201;
+            deployParams[CYBER]
+                .cyberVault = 0xAeBcFdE012679c316EdDDee16C9e472d027f427d;
         }
 
         {
