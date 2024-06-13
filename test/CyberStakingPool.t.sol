@@ -9,6 +9,8 @@ import { DataTypes } from "../src/libraries/DataTypes.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract CyberStakingPoolTest is Test {
+    error EnforcedPause();
+
     CyberStakingPool cyberStakingPool;
     MockCyberToken cyberToken;
 
@@ -121,8 +123,34 @@ contract CyberStakingPoolTest is Test {
 
         cyberStakingPool.stake(amount);
 
-        vm.expectRevert("TRANSFER_PAUSED");
+        vm.expectRevert("TRANSFER_NOT_ALLOWED");
         cyberStakingPool.transfer(bob, amount);
+
+        vm.startPrank(owner);
+        cyberStakingPool.setAllowTransfer(true);
+
+        vm.startPrank(alice);
+        cyberStakingPool.transfer(bob, amount);
+    }
+
+    function testPause() public {
+        uint256 amount = 1000 ether;
+        vm.startPrank(alice);
+        cyberToken.mint(alice, amount);
+        cyberToken.approve(address(cyberStakingPool), amount);
+
+        vm.startPrank(owner);
+        cyberStakingPool.pause();
+
+        vm.startPrank(alice);
+        vm.expectRevert(EnforcedPause.selector);
+        cyberStakingPool.stake(amount);
+
+        vm.startPrank(owner);
+        cyberStakingPool.unpause();
+
+        vm.startPrank(alice);
+        cyberStakingPool.stake(amount);
     }
 
     function testRewardBalance() public {

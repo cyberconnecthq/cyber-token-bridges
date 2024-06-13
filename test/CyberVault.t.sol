@@ -10,6 +10,8 @@ import { DataTypes } from "../src/libraries/DataTypes.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract CyberVaultTest is Test {
+    error EnforcedPause();
+
     CyberVault cyberVault;
     MockCyberToken cyberToken;
     CyberStakingPool cyberStakingPool;
@@ -371,5 +373,25 @@ contract CyberVaultTest is Test {
         cyberToken.mint(owner, amount);
         cyberVault.claimAndStake();
         assertGt(cyberStakingPool.balanceOf(address(cyberVault)), oldBlance);
+    }
+
+    function testPause() public {
+        uint256 amount = 1000 ether;
+        vm.startPrank(alice);
+        cyberToken.mint(alice, amount);
+        cyberToken.approve(address(cyberVault), amount);
+
+        vm.startPrank(owner);
+        cyberVault.pause();
+
+        vm.startPrank(alice);
+        vm.expectRevert(EnforcedPause.selector);
+        cyberVault.deposit(amount, alice);
+
+        vm.startPrank(owner);
+        cyberVault.unpause();
+
+        vm.startPrank(alice);
+        cyberVault.deposit(amount, alice);
     }
 }

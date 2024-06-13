@@ -9,6 +9,7 @@ import { ERC20VotesUpgradeable } from "@openzeppelin/contracts-upgradeable/token
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import { ERC4626Upgradeable, Math } from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC4626Upgradeable.sol";
 import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
@@ -28,6 +29,7 @@ contract CyberVault is
     ERC4626Upgradeable,
     ERC20VotesUpgradeable,
     OwnableUpgradeable,
+    PausableUpgradeable,
     UUPSUpgradeable
 {
     using SafeERC20 for IERC20;
@@ -79,6 +81,8 @@ contract CyberVault is
         __ERC20_init("Compound CYBER", "cCYBER");
         __EIP712_init("Compound CYBER", "1");
         __Ownable_init(_owner);
+        __Pausable_init();
+        __UUPSUpgradeable_init();
 
         protocolFeeTreasury = _protocolFeeTreasury;
         cyberStakingPool = ICyberStakingPool(_stakingPool);
@@ -131,7 +135,7 @@ contract CyberVault is
     function deposit(
         uint256 assets,
         address receiver
-    ) public override returns (uint256) {
+    ) public override whenNotPaused returns (uint256) {
         require(receiver != address(0), "INVALID_RECEIVER");
         claim();
         uint256 maxAssets = maxDeposit(receiver);
@@ -146,7 +150,7 @@ contract CyberVault is
     function mint(
         uint256 shares,
         address receiver
-    ) public override returns (uint256) {
+    ) public override whenNotPaused returns (uint256) {
         require(receiver != address(0), "INVALID_RECEIVER");
         claim();
         uint256 maxShares = maxMint(receiver);
@@ -162,7 +166,7 @@ contract CyberVault is
         uint256 assets,
         address receiver,
         address _owner
-    ) public override returns (uint256) {
+    ) public override whenNotPaused returns (uint256) {
         require(receiver != address(0), "INVALID_RECEIVER");
         LockAmount memory lockAmount = _lockAmounts[_owner];
         require(assets == lockAmount.lockedAssets, "INVALID_ASSETS");
@@ -181,7 +185,7 @@ contract CyberVault is
         uint256 shares,
         address receiver,
         address _owner
-    ) public override returns (uint256) {
+    ) public override whenNotPaused returns (uint256) {
         require(receiver != address(0), "INVALID_RECEIVER");
         LockAmount memory lockAmount = _lockAmounts[_owner];
         require(shares == lockAmount.lockedShares, "INVALID_SHARES");
@@ -225,7 +229,7 @@ contract CyberVault is
         address from,
         address to,
         uint256 value
-    ) internal virtual override(ERC20Upgradeable, ERC20VotesUpgradeable) {
+    ) internal override(ERC20Upgradeable, ERC20VotesUpgradeable) whenNotPaused {
         ERC20VotesUpgradeable._update(from, to, value);
     }
 
@@ -246,7 +250,9 @@ contract CyberVault is
                             EXTERNAL 
     //////////////////////////////////////////////////////////////*/
 
-    function initiateRedeem(uint256 shares) external returns (uint256) {
+    function initiateRedeem(
+        uint256 shares
+    ) external whenNotPaused returns (uint256) {
         claimAndStake();
         uint256 maxShares = maxRedeem(msg.sender);
         require(shares <= maxShares, "EXCEED_MAX_REDEEM");
@@ -255,7 +261,9 @@ contract CyberVault is
         return assets;
     }
 
-    function initiateWithdraw(uint256 assets) external returns (uint256) {
+    function initiateWithdraw(
+        uint256 assets
+    ) external whenNotPaused returns (uint256) {
         claimAndStake();
         uint256 maxAssets = maxWithdraw(msg.sender);
         require(assets <= maxAssets, "EXCEED_MAX_WITHDRAW");
@@ -270,7 +278,7 @@ contract CyberVault is
         return _lockAmounts[account];
     }
 
-    function stake() public {
+    function stake() public whenNotPaused {
         uint256 amount = IERC20(asset()).balanceOf(address(this));
         if (
             amount != 0 &&
@@ -282,7 +290,7 @@ contract CyberVault is
         }
     }
 
-    function claim() public returns (uint256 protocolFeeAssets) {
+    function claim() public whenNotPaused returns (uint256 protocolFeeAssets) {
         uint256 rewards = cyberStakingPool.claimAllRewards();
         protocolFeeAssets = (rewards * protocolFeeBps) / MAX_BPS;
         if (protocolFeeAssets == 0) {
@@ -292,7 +300,7 @@ contract CyberVault is
         emit CollectFee(protocolFeeAssets, protocolFeeTreasury);
     }
 
-    function claimAndStake() public {
+    function claimAndStake() public whenNotPaused {
         claim();
         stake();
     }
@@ -300,7 +308,7 @@ contract CyberVault is
     function batchDeposit(
         uint256[] calldata assets,
         address[] calldata receivers
-    ) external {
+    ) external whenNotPaused {
         require(assets.length == receivers.length, "INVALID_LENGTH");
         claim();
         uint256 totalDeposit = 0;
@@ -340,6 +348,14 @@ contract CyberVault is
         address _protocolFeeTreasury
     ) external onlyOwner {
         protocolFeeTreasury = _protocolFeeTreasury;
+    }
+
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    function unpause() external onlyOwner {
+        _unpause();
     }
 
     /*//////////////////////////////////////////////////////////////

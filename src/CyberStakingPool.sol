@@ -77,6 +77,8 @@ contract CyberStakingPool is
 
     uint256 internal _minimalStakeAmount;
 
+    bool public allowTransfer;
+
     // User address => key => lock amount for withdrawal
     mapping(address => mapping(bytes32 => LockAmount))
         internal _lockedAmountByKey;
@@ -100,13 +102,13 @@ contract CyberStakingPool is
         cyber = IERC20(_cyber);
         lockDuration = 7 days;
         _minimalStakeAmount = 1000 ether;
+        allowTransfer = false;
 
         __UUPSUpgradeable_init();
         __Pausable_init();
         __ERC20_init("Staked CYBER", "stCYBER");
         __EIP712_init("Staked CYBER", "1");
         __Ownable_init(_owner);
-        _pause();
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -128,7 +130,7 @@ contract CyberStakingPool is
         uint256 value
     ) internal virtual override(ERC20Upgradeable, ERC20VotesUpgradeable) {
         if (from != address(0) && to != address(0) && to != address(this)) {
-            require(!paused(), "TRANSFER_PAUSED");
+            require(allowTransfer, "TRANSFER_NOT_ALLOWED");
             // Sender
             _updateCurrentUnclaimedRewards(from, balanceOf(from));
 
@@ -179,7 +181,9 @@ contract CyberStakingPool is
         return _minimalStakeAmount;
     }
 
-    function stake(uint256 _amount) external override updateReward(msg.sender) {
+    function stake(
+        uint256 _amount
+    ) external override whenNotPaused updateReward(msg.sender) {
         require(_amount > 0, "ZERO_AMOUNT");
         require(
             _amount + balanceOf(msg.sender) >= _minimalStakeAmount,
@@ -195,7 +199,7 @@ contract CyberStakingPool is
     function unstake(
         uint256 _amount,
         bytes32 _key
-    ) external override updateReward(msg.sender) {
+    ) external override whenNotPaused updateReward(msg.sender) {
         require(_amount > 0, "ZERO_AMOUNT");
         require(balanceOf(msg.sender) >= _amount, "INSUFFICIENT_BALANCE");
 
@@ -218,7 +222,9 @@ contract CyberStakingPool is
         );
     }
 
-    function withdraw(bytes32 _key) external override updateReward(msg.sender) {
+    function withdraw(
+        bytes32 _key
+    ) external override whenNotPaused updateReward(msg.sender) {
         LockAmount memory lockAmount = _lockedAmountByKey[msg.sender][_key];
         require(lockAmount.lockEnd != 0, "NOT_AVAILABLE_TO_WITHDRAW");
         require(
@@ -237,6 +243,7 @@ contract CyberStakingPool is
     function claimAllRewards()
         external
         override
+        whenNotPaused
         updateReward(msg.sender)
         returns (uint256 totalRewards)
     {
@@ -325,6 +332,10 @@ contract CyberStakingPool is
 
     function unpause() external onlyOwner {
         _unpause();
+    }
+
+    function setAllowTransfer(bool _allowTransfer) external onlyOwner {
+        allowTransfer = _allowTransfer;
     }
 
     function setLockDuration(uint256 _lockDuration) external onlyOwner {
