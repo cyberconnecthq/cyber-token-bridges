@@ -1,4 +1,4 @@
 | Contract              | Address                                    |
 | --------------------- | ------------------------------------------ |
-| LaunchTokenWithdrawer | 0x849492289cdc1dca4c14fd7562da1b9a55dd8378 |
 | CyberTokenController  | 0x9a9d5a29206dde4f70825032df32333de5f63921 |
+| LaunchTokenWithdrawer | 0x88d79d96a5cc4f0211811e7c10a70ea8d8b35f83 |

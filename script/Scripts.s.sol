@@ -594,7 +594,7 @@ contract DeployWithdrawer is Script, DeploySetting {
                             deployParams[block.chainid].protocolOwner, // owner
                             deployParams[block.chainid].cyberToken, // cyber token
                             bytes32(
-                                0x7c5174cc95a1f561633cf7303d210630f707de560c7814363155fc2df6b4474e
+                                0xa529afe6e1c226b738999470f3a3d0d1be6f4d903ab6c8e0d31aa459f612d9fd
                             ), // merkle root
                             deployParams[block.chainid].treasury // bridge recipient
                         )

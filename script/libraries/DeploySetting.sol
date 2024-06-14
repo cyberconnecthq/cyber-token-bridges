@@ -149,9 +149,9 @@ contract DeploySetting {
             deployParams[CYBER]
                 .treasury = 0x0793811Ee06942bAcAb7BD28669D810dE62487B6;
             deployParams[CYBER]
-                .cyberStakingPool = 0x897b968E9Ba2ec2E1b2aaac0bB9268Bc3E9BB201;
+                .cyberStakingPool = 0x3EfE22FA52F6789DDfc263Cec5BCf435b14b77e2;
             deployParams[CYBER]
-                .cyberVault = 0xAeBcFdE012679c316EdDDee16C9e472d027f427d;
+                .cyberVault = 0x522D3A9C2Bc14cE1C4D210ED41ab239FdED02F2b;
         }
 
         {

@@ -48,6 +48,8 @@ contract CyberVault is
         uint256 lockEnd
     );
     event CollectFee(uint256 protocolFee, address protocolFeeTreasury);
+    event ProtocolFeeBpsUpdated(uint256 protocolFeeBps);
+    event ProtocolFeeTreasuryUpdated(address protocolFeeTreasury);
 
     /*//////////////////////////////////////////////////////////////
                             STORAGE
@@ -365,12 +367,14 @@ contract CyberVault is
     function setProtocolFeeBps(uint256 _protocolFeeBps) external onlyOwner {
         require(_protocolFeeBps <= MAX_BPS, "INVALID_PROTOCOL_FEE_BPS");
         protocolFeeBps = _protocolFeeBps;
+        emit ProtocolFeeBpsUpdated(_protocolFeeBps);
     }
 
     function setProtocolFeeTreasury(
         address _protocolFeeTreasury
     ) external onlyOwner {
         protocolFeeTreasury = _protocolFeeTreasury;
+        emit ProtocolFeeTreasuryUpdated(_protocolFeeTreasury);
     }
 
     function pause() external onlyOwner {

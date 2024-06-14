@@ -103,4 +103,13 @@ contract LaunchTokenWithdrawer is MerkleDistribution, Ownable {
     function setLockDuration(uint256 _lockDuration) external onlyOwner {
         lockDuration = _lockDuration;
     }
+
+    function rescueToken(address token, uint256 amount) external onlyOwner {
+        if (token == address(0)) {
+            (bool success, ) = owner().call{ value: amount }("");
+            require(success, "WITHDRAW_FAILED");
+        } else {
+            IERC20(token).safeTransfer(owner(), amount);
+        }
+    }
 }
