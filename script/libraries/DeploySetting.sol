@@ -13,6 +13,7 @@ contract DeploySetting {
         address cyberVault;
         address withdrawer;
         address treasury;
+        address backendSigner;
         // lz related
         address lzPolyhedraDVN;
         address lzLabsDVN;
@@ -122,6 +123,8 @@ contract DeploySetting {
                 .lzLabsDVN = 0x88B27057A9e00c5F05DDa29241027afF63f9e6e0;
             deployParams[CYBER_TESTNET].enforcedGas = 100000;
             deployParams[CYBER_TESTNET].confirmations = 20;
+            deployParams[CYBER_TESTNET]
+                .backendSigner = 0xaB24749c622AF8FC567CA2b4d3EC53019F83dB8F;
         }
 
         {
@@ -152,6 +155,8 @@ contract DeploySetting {
                 .cyberStakingPool = 0x3EfE22FA52F6789DDfc263Cec5BCf435b14b77e2;
             deployParams[CYBER]
                 .cyberVault = 0x522D3A9C2Bc14cE1C4D210ED41ab239FdED02F2b;
+            deployParams[CYBER]
+                .backendSigner = 0x2A2EA826102c067ECE82Bc6E2B7cf38D7EbB1B82;
         }
 
         {
