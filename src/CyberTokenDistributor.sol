@@ -52,6 +52,10 @@ contract CyberTokenDistributor is
         address _signer,
         address _cyber
     ) external initializer {
+        require(_owner != address(0), "INVALID_OWNER");
+        require(_signer != address(0), "INVALID_SIGNER");
+        require(_cyber != address(0), "INVALID_CYBER");
+
         cyber = IERC20(_cyber);
         signer = _signer;
 
@@ -78,6 +82,8 @@ contract CyberTokenDistributor is
         uint256 deadline,
         bytes calldata signature
     ) external whenNotPaused {
+        require(deadline >= block.timestamp, "DEADLINE_EXPIRED");
+        require(!cliamIdUsed[claimId], "CLAIM_ID_USED");
         bytes32 digest = _hashTypedDataV4(
             keccak256(
                 abi.encode(
@@ -93,8 +99,6 @@ contract CyberTokenDistributor is
             SignatureChecker.isValidSignatureNow(signer, digest, signature),
             "INVALID_SIGNATURE"
         );
-        require(deadline >= block.timestamp, "DEADLINE_EXPIRED");
-        require(!cliamIdUsed[claimId], "CLAIM_ID_USED");
         cliamIdUsed[claimId] = true;
 
         cyber.safeTransfer(msg.sender, amount);
