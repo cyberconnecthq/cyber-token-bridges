@@ -36,7 +36,7 @@ contract CyberTokenDistributor is
         keccak256(
             "claim(address user,bytes32 claimId,uint256 amount,uint256 deadline)"
         );
-    mapping(bytes32 => bool) public cliamIdUsed;
+    mapping(bytes32 => bool) public claimIdUsed;
     address public signer;
 
     /*//////////////////////////////////////////////////////////////
@@ -83,7 +83,7 @@ contract CyberTokenDistributor is
         bytes calldata signature
     ) external whenNotPaused {
         require(deadline >= block.timestamp, "DEADLINE_EXPIRED");
-        require(!cliamIdUsed[claimId], "CLAIM_ID_USED");
+        require(!claimIdUsed[claimId], "CLAIM_ID_USED");
         bytes32 digest = _hashTypedDataV4(
             keccak256(
                 abi.encode(
@@ -99,7 +99,7 @@ contract CyberTokenDistributor is
             SignatureChecker.isValidSignatureNow(signer, digest, signature),
             "INVALID_SIGNATURE"
         );
-        cliamIdUsed[claimId] = true;
+        claimIdUsed[claimId] = true;
 
         cyber.safeTransfer(msg.sender, amount);
 
