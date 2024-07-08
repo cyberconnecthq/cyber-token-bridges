@@ -9,6 +9,7 @@ import { CyberTokenAdapter } from "../src/CyberTokenAdapter.sol";
 import { CyberTokenController } from "../src/CyberTokenController.sol";
 import { CyberStakingPool } from "../src/CyberStakingPool.sol";
 import { CyberVault } from "../src/CyberVault.sol";
+import { CyberTokenDistributor } from "../src/CyberTokenDistributor.sol";
 import { LaunchTokenWithdrawer } from "../src/LaunchTokenWithdrawer.sol";
 import { RewardTokenWithdrawer } from "../src/RewardTokenWithdrawer.sol";
 
@@ -251,10 +252,10 @@ contract SetOappConfig is Script, DeploySetting {
                 );
 
                 // set peer
-                // IOAppCore(srcChainParams.lzController).setPeer(
-                //     dstChainParams.eid,
-                //     bytes32(uint256(uint160(dstChainParams.lzController)))
-                // );
+                IOAppCore(srcChainParams.lzController).setPeer(
+                    dstChainParams.eid,
+                    bytes32(uint256(uint160(dstChainParams.lzController)))
+                );
 
                 // set enforced options
                 bytes memory receiveOption = OptionsBuilder
@@ -495,8 +496,8 @@ contract TestBridge is Script, DeploySetting {
             uint256[1] memory dstChainIds = [
                 // DeploySetting.ETH,
                 // DeploySetting.BNB,
-                // DeploySetting.OPTIMISM
-                DeploySetting.CYBER
+                DeploySetting.OPTIMISM
+                // DeploySetting.CYBER
             ];
 
             for (uint256 i = 0; i < dstChainIds.length; i++) {
@@ -725,6 +726,58 @@ contract DeployCyberVault is Script, DeploySetting {
     }
 }
 
+contract DeployCyberTokenDistributor is Script, DeploySetting {
+    function run() external {
+        _setDeployParams();
+        vm.startBroadcast();
+
+        if (
+            block.chainid == DeploySetting.CYBER_TESTNET ||
+            block.chainid == DeploySetting.CYBER
+        ) {
+            address cyberTokenDistributorImpl = Create2Deployer(
+                deployParams[block.chainid].deployerContract
+            ).deploy(
+                    abi.encodePacked(type(CyberTokenDistributor).creationCode),
+                    LibDeploy.SALT
+                );
+
+            LibDeploy._write(
+                vm,
+                "CyberTokenDistributor(Impl)",
+                cyberTokenDistributorImpl
+            );
+
+            address cyberTokenDistributorProxy = Create2Deployer(
+                deployParams[block.chainid].deployerContract
+            ).deploy(
+                    abi.encodePacked(
+                        type(ERC1967Proxy).creationCode,
+                        abi.encode(
+                            cyberTokenDistributorImpl,
+                            abi.encodeWithSelector(
+                                CyberTokenDistributor.initialize.selector,
+                                deployParams[block.chainid].protocolOwner,
+                                deployParams[block.chainid].backendSigner,
+                                deployParams[block.chainid].cyberToken
+                            )
+                        )
+                    ),
+                    LibDeploy.SALT
+                );
+            LibDeploy._write(
+                vm,
+                "CyberTokenDistributor(Proxy)",
+                cyberTokenDistributorProxy
+            );
+        } else {
+            revert("NOT_SUPPORTED_CHAIN_ID");
+        }
+
+        vm.stopBroadcast();
+    }
+}
+
 contract ConfigCyberVault is Script, DeploySetting {
     function run() external {
         _setDeployParams();
@@ -790,15 +843,18 @@ contract ConfigCyberStakingPool is Script, DeploySetting {
         _setDeployParams();
         vm.startBroadcast();
 
-        if (block.chainid == DeploySetting.CYBER_TESTNET) {
+        if (
+            block.chainid == DeploySetting.CYBER_TESTNET ||
+            block.chainid == DeploySetting.CYBER
+        ) {
             // CyberStakingPool(deployParams[block.chainid].cyberStakingPool)
             //     .setLockDuration(5 minutes);
             // CyberStakingPool(deployParams[block.chainid].cyberStakingPool)
             //     .setMinimalStakeAmount(1 ether);
-            uint256 totalRewards = 150000 ether;
-            uint256 startTime = 1718173200 + 30 minutes;
-            uint256 duration = 1 hours;
-            uint256 endTime = startTime + duration;
+            uint256 totalRewards = 450000 ether;
+            uint256 startTime = 1718366400;
+            uint256 endTime = 1726315200;
+            uint256 duration = endTime - startTime;
             CyberStakingPool(deployParams[block.chainid].cyberStakingPool)
                 .createDistribution(
                     uint128(totalRewards / duration),
