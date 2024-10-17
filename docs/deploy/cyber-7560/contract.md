@@ -8,3 +8,4 @@
 | RewardTokenWithdrawer        | 0x96d16153b307ecf4f57dd4da06709847abf1c412 |
 | CyberTokenDistributor(Impl)  | 0xa48cd2b05635166bf59f228ff3b17895418fd038 |
 | CyberTokenDistributor(Proxy) | 0x1a77516421f4d7a38f1f7e5475bf7005247554ae |
+| ResatkeAirdrop               | 0x258318ea9709249fcbf12f43287e6ac6e65334b3 |

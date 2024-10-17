@@ -8,3 +8,4 @@
 | CyberTokenController         | 0xeade18d33dc4ab38babef85a10adf3bac38d9833 |
 | CyberTokenDistributor(Impl)  | 0x9088c10331128fe3827e47626fa3dd77cd59d635 |
 | CyberTokenDistributor(Proxy) | 0x38599062708d9db08df786c42bd6ff066f210eb9 |
+| ResatkeAirdrop               | 0xa2d778d08ebdf6e3387e6da30c72a51b03ae191c |

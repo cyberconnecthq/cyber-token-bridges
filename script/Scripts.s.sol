@@ -617,13 +617,13 @@ contract DeployWithdrawer is Script, DeploySetting {
                             deployParams[block.chainid].cyberToken, // cyber token
                             deployParams[block.chainid].cyberVault, // cyber vault
                             bytes32(
-                                0xc9e90affcdbb9bfbe7ba2312b2ee0d49b4b361e77122ec358b9ce714940d4189
+                                0xbdbec4fdce250eff5ca9fa0ecd2685b8991bd1441a70c65ab5b9754ebca798a6
                             ) // merkle root
                         )
                     ),
                     LibDeploy.SALT
                 );
-            LibDeploy._write(vm, "RewardTokenWithdrawer", withdrawer);
+            LibDeploy._write(vm, "ResatkeAirdrop", withdrawer);
         } else {
             revert("NOT_SUPPORTED_CHAIN_ID");
         }
