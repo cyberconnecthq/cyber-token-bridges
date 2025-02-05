@@ -7,7 +7,7 @@ import type { OAppOmniGraphHardhat, OmniPointHardhat } from '@layerzerolabs/tool
 // If you do use an address, ensure artifacts exists.
 const sepoliaContract: OmniPointHardhat = {
     eid: EndpointId.SEPOLIA_V2_TESTNET,
-    address: '0x2C251296AFb9385CFf7AbC8Bcd5C6F54b38b9B51',
+    contractName: 'CyberTokenAdapter',
 }
 
 const solanaDevnetContract: OmniPointHardhat = {
@@ -101,7 +101,7 @@ const config: OAppOmniGraphHardhat = {
                     {
                         msgType: 1,
                         optionType: ExecutorOptionType.LZ_RECEIVE,
-                        gas: 200000,
+                        gas: 100000,
                     },
                 ],
             },

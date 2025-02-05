@@ -3,6 +3,8 @@
   "version": "0.6.0",
   "private": true,
   "scripts": {
+    "bridge:sepolia:sol": "hardhat --network sepolia-testnet send --dst-eid 40168 --amount 1000000000000000000000000 --to dJvTxAuByQ4fy6piZpBEjHXVQbDAAFL4HV6YN3nXaGv --contract-name CyberTokenAdapter",
+    "bridge:sol:sepolia": "source .env && hardhat lz:oft:solana:send --amount 1000000000000000 --from-eid 40168 --to 0x7884f7F04F994da14302a16Cf15E597e31eebECf --to-eid 40161 --mint ${MINT_ADDRESS} --program-id ${PROGRAM_ID} --escrow ${ESCROW}",
     "clean": "rm -rf target artifacts cache out .anchor",
     "compile": "concurrently -c auto --names forge,hardhat,anchor '$npm_execpath run compile:forge' '$npm_execpath run compile:hardhat' '$npm_execpath run compile:anchor'",
     "compile:anchor": "anchor build",
@@ -12,7 +14,7 @@
     "create:oft:mainnet": "hardhat lz:oft:solana:create --eid 30168 --name Cyber --symbol CYBER --only-oft-store true --program-id ${PROGRAM_ID} --uri ${TOKEN_URI}",
     "deploy:devnet": "source .env && solana program deploy --program-id target/deploy/oft-keypair.json target/verifiable/oft.so -u ${RPC_URL_SOLANA_TESTNET}",
     "deploy:mainnet": "source .env && solana program deploy --program-id target/deploy/oft-keypair.json target/verifiable/oft.so -u ${RPC_URL_SOLANA}",
-    "init:oft:devnet": "source .env && hardhat lz:oapp:init:solana --oapp-config layerzero.config.ts --solana-secret-key ${SOLANA_PRIVATE_KEY} --solana-program-id ${PROGRAM_ID}",
+    "init:oft:devnet": "source .env && hardhat lz:oapp:init:solana --oapp-config layerzero.init.ts --solana-secret-key ${SOLANA_PRIVATE_KEY} --solana-program-id ${PROGRAM_ID}",
     "init:oft:mainnet": "source .env && hardhat lz:oapp:init:solana --oapp-config layerzero.config.ts --solana-secret-key ${SOLANA_PRIVATE_KEY} --solana-program-id ${PROGRAM_ID}",
     "lint": "$npm_execpath run lint:js && $npm_execpath run lint:sol",
     "lint:fix": "eslint --fix '**/*.{js,ts,json}' && prettier --write . && solhint 'contracts/**/*.sol' --fix --noPrompt",
@@ -22,7 +24,7 @@
     "test:anchor": "anchor test",
     "test:forge": "forge test",
     "test:hardhat": "hardhat test",
-    "wire:oft:devnet": "source .env && hardhat lz:oapp:wire --oapp-config layerzero.wire.testnet.ts --solana-secret-key \"${SOLANA_PRIVATE_KEY}\" --solana-program-id ${PROGRAM_ID}"
+    "wire:oft:devnet": "source .env && hardhat lz:oapp:wire --oapp-config layerzero.wire.testnet.ts --solana-secret-key ${SOLANA_PRIVATE_KEY} --solana-program-id ${PROGRAM_ID}"
   },
   "resolutions": {
     "ethers": "^5.7.2",
