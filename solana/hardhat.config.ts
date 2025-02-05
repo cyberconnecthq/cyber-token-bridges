@@ -61,7 +61,7 @@ const config: HardhatUserConfig = {
     networks: {
         'sepolia-testnet': {
             eid: EndpointId.SEPOLIA_V2_TESTNET,
-            url: process.env.RPC_URL_SEPOLIA || 'https://gateway.tenderly.co/public/sepolia',
+            url: process.env.RPC_URL_SEPOLIA,
             accounts,
         },
         hardhat: {

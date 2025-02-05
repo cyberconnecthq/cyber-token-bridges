@@ -27,6 +27,7 @@ export const createSolanaConnectionFactory = () =>
         createRpcUrlFactory({
             [EndpointId.SOLANA_V2_MAINNET]: process.env.RPC_URL_SOLANA,
             [EndpointId.SOLANA_V2_TESTNET]: process.env.RPC_URL_SOLANA_TESTNET,
+            [EndpointId.SEPOLIA_V2_TESTNET]: process.env.RPC_URL_SEPOLIA,
         })
     )
 

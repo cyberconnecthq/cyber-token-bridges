@@ -8,6 +8,12 @@
     "compile:anchor": "anchor build",
     "compile:forge": "forge build",
     "compile:hardhat": "hardhat compile",
+    "create:oft:devnet": "hardhat lz:oft:solana:create --eid 40168 --name Cyber --symbol CYBER --only-oft-store true --program-id ${PROGRAM_ID} --uri ${TOKEN_URI}",
+    "create:oft:mainnet": "hardhat lz:oft:solana:create --eid 30168 --name Cyber --symbol CYBER --only-oft-store true --program-id ${PROGRAM_ID} --uri ${TOKEN_URI}",
+    "deploy:devnet": "source .env && solana program deploy --program-id target/deploy/oft-keypair.json target/verifiable/oft.so -u ${RPC_URL_SOLANA_TESTNET}",
+    "deploy:mainnet": "source .env && solana program deploy --program-id target/deploy/oft-keypair.json target/verifiable/oft.so -u ${RPC_URL_SOLANA}",
+    "init:oft:devnet": "source .env && hardhat lz:oapp:init:solana --oapp-config layerzero.config.ts --solana-secret-key ${SOLANA_PRIVATE_KEY} --solana-program-id ${PROGRAM_ID}",
+    "init:oft:mainnet": "source .env && hardhat lz:oapp:init:solana --oapp-config layerzero.config.ts --solana-secret-key ${SOLANA_PRIVATE_KEY} --solana-program-id ${PROGRAM_ID}",
     "lint": "$npm_execpath run lint:js && $npm_execpath run lint:sol",
     "lint:fix": "eslint --fix '**/*.{js,ts,json}' && prettier --write . && solhint 'contracts/**/*.sol' --fix --noPrompt",
     "lint:js": "eslint '**/*.{js,ts,json}' && prettier --check .",
@@ -15,7 +21,8 @@
     "test": "$npm_execpath run test:forge && $npm_execpath run test:hardhat",
     "test:anchor": "anchor test",
     "test:forge": "forge test",
-    "test:hardhat": "hardhat test"
+    "test:hardhat": "hardhat test",
+    "wire:oft:devnet": "source .env && hardhat lz:oapp:wire --oapp-config layerzero.wire.testnet.ts --solana-secret-key \"${SOLANA_PRIVATE_KEY}\" --solana-program-id ${PROGRAM_ID}"
   },
   "resolutions": {
     "ethers": "^5.7.2",
@@ -36,6 +43,7 @@
     "@layerzerolabs/lz-evm-v1-0.7": "^3.0.12",
     "@layerzerolabs/lz-solana-sdk-v2": "3.0.0",
     "@layerzerolabs/lz-v2-utilities": "^3.0.12",
+    "@layerzerolabs/metadata-tools": "^0.3.1",
     "@layerzerolabs/oapp-evm": "^0.3.0",
     "@layerzerolabs/oft-evm": "^3.1.0",
     "@layerzerolabs/oft-v2-solana-sdk": "3.0.0",
