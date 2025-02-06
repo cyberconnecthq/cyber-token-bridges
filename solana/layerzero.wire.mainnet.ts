@@ -3,21 +3,40 @@ import { OAppEnforcedOption, OmniPointHardhat } from '@layerzerolabs/toolbox-har
 import { EndpointId } from '@layerzerolabs/lz-definitions'
 import { generateConnectionsConfig } from '@layerzerolabs/metadata-tools'
 
-export const sepoliaContract: OmniPointHardhat = {
-    eid: EndpointId.SEPOLIA_V2_TESTNET,
-    address: '0x2C251296AFb9385CFf7AbC8Bcd5C6F54b38b9B51',
+export const ethContract: OmniPointHardhat = {
+    eid: EndpointId.ETHEREUM_V2_MAINNET,
+    contractName: 'CyberTokenAdapter',
 }
 
-export const solanaDevnetContract: OmniPointHardhat = {
-    eid: EndpointId.SOLANA_V2_TESTNET,
+export const baseContract: OmniPointHardhat = {
+    eid: EndpointId.BASE_V2_MAINNET,
+    contractName: 'CyberTokenController',
+}
+
+export const cyberContract: OmniPointHardhat = {
+    eid: EndpointId.CYBER_V2_MAINNET,
+    contractName: 'CyberTokenController',
+}
+
+export const solanaContract: OmniPointHardhat = {
+    eid: EndpointId.SOLANA_V2_MAINNET,
     address: 'Fsy4yRuTRY4daNrF9fPYTGwc7MniBgjavUAhC8S9gAK8', // your OFT Store address
 }
 
-const EVM_ENFORCED_OPTIONS: OAppEnforcedOption[] = [
+const EVM_BURN_MINT_ENFORCED_OPTIONS: OAppEnforcedOption[] = [
     {
         msgType: 1,
         optionType: ExecutorOptionType.LZ_RECEIVE,
-        gas: 120000,
+        gas: 100000,
+        value: 0,
+    },
+]
+
+const EVM_LOCK_UNLOCK_ENFORCED_OPTIONS: OAppEnforcedOption[] = [
+    {
+        msgType: 1,
+        optionType: ExecutorOptionType.LZ_RECEIVE,
+        gas: 65000,
         value: 0,
     },
 ]
@@ -34,23 +53,42 @@ const SOLANA_ENFORCED_OPTIONS: OAppEnforcedOption[] = [
 export default async function () {
     const connections = await generateConnectionsConfig([
         [
-            sepoliaContract, // srcContract
-            solanaDevnetContract, // dstContract
-            [['LayerZero Labs', 'Polyhedra zkBridge'], []], // [ requiredDVN[], [ optionalDVN[], threshold ] ]
-            [1, 1], // [srcToDstConfirmations, dstToSrcConfirmations]
-            [SOLANA_ENFORCED_OPTIONS, EVM_ENFORCED_OPTIONS], // [enforcedOptionsSrcToDst, enforcedOptionsDstToSrc]
+            ethContract,
+            solanaContract,
+            [['LayerZero Labs', 'Nethermind'], []],
+            [15, 32],
+            [SOLANA_ENFORCED_OPTIONS, EVM_LOCK_UNLOCK_ENFORCED_OPTIONS],
         ],
         [
-            solanaDevnetContract,
-            sepoliaContract,
-            [['LayerZero Labs', 'Polyhedra zkBridge'], []], // [ requiredDVN[], [ optionalDVN[], threshold ] ]
-            [1, 1], // [srcToDstConfirmations, dstToSrcConfirmations]
-            [EVM_ENFORCED_OPTIONS, SOLANA_ENFORCED_OPTIONS], // [enforcedOptionsSrcToDst, enforcedOptionsDstToSrc]
+            cyberContract,
+            solanaContract,
+            [['LayerZero Labs', 'Nethermind'], []],
+            [20, 32],
+            [SOLANA_ENFORCED_OPTIONS, EVM_BURN_MINT_ENFORCED_OPTIONS],
+        ],
+        [
+            baseContract,
+            ethContract,
+            [['LayerZero Labs', 'Nethermind'], []],
+            [20, 15],
+            [EVM_LOCK_UNLOCK_ENFORCED_OPTIONS, EVM_BURN_MINT_ENFORCED_OPTIONS],
+        ],
+        [
+            baseContract,
+            cyberContract,
+            [['LayerZero Labs', 'Nethermind'], []],
+            [20, 20],
+            [EVM_BURN_MINT_ENFORCED_OPTIONS, EVM_BURN_MINT_ENFORCED_OPTIONS],
         ],
     ])
 
     return {
-        contracts: [{ contract: sepoliaContract }, { contract: solanaDevnetContract }],
+        contracts: [
+            { contract: ethContract },
+            { contract: baseContract },
+            { contract: cyberContract },
+            { contract: solanaContract },
+        ],
         connections,
     }
 }
