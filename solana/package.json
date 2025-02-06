@@ -24,6 +24,7 @@
     "test:anchor": "anchor test",
     "test:forge": "forge test",
     "test:hardhat": "hardhat test",
+    "update:metadata:oft:devnet": "source .env && hardhat lz:oft:solana:update-metadata --eid 40168 --name Cyber --symbol CYBER --mint ${MINT_ADDRESS} --uri ${TOKEN_URI}",
     "wire:oft:devnet": "source .env && hardhat lz:oapp:wire --oapp-config layerzero.wire.testnet.ts --solana-secret-key ${SOLANA_PRIVATE_KEY} --solana-program-id ${PROGRAM_ID}",
     "wire:oft:mainnet": "source .env && hardhat lz:oapp:wire --oapp-config layerzero.wire.mainnet.ts --solana-secret-key ${SOLANA_PRIVATE_KEY} --solana-program-id ${PROGRAM_ID}"
   },

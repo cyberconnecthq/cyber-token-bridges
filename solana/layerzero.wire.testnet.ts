@@ -59,35 +59,35 @@ export default async function () {
             [1, 1], // [srcToDstConfirmations, dstToSrcConfirmations]
             [SOLANA_ENFORCED_OPTIONS, EVM_LOCK_UNLOCK_ENFORCED_OPTIONS], // [enforcedOptionsSrcToDst, enforcedOptionsDstToSrc]
         ],
-        // [
-        //     sepoliaContract, // srcContract
-        //     baseSepoliaContract, // dstContract
-        //     [['LayerZero Labs'], []], // [ requiredDVN[], [ optionalDVN[], threshold ] ]
-        //     [1, 1], // [srcToDstConfirmations, dstToSrcConfirmations]
-        //     [EVM_BURN_MINT_ENFORCED_OPTIONS, EVM_LOCK_UNLOCK_ENFORCED_OPTIONS], // [enforcedOptionsSrcToDst, enforcedOptionsDstToSrc]
-        // ],
-        // [
-        //     cyberSepoliaContract, // srcContract
-        //     solanaDevnetContract, // dstContract
-        //     [['LayerZero Labs'], []], // [ requiredDVN[], [ optionalDVN[], threshold ] ]
-        //     [1, 1], // [srcToDstConfirmations, dstToSrcConfirmations]
-        //     [SOLANA_ENFORCED_OPTIONS, EVM_BURN_MINT_ENFORCED_OPTIONS], // [enforcedOptionsSrcToDst, enforcedOptionsDstToSrc]
-        // ],
-        // [
-        //     cyberSepoliaContract, // srcContract
-        //     baseSepoliaContract, // dstContract
-        //     [['LayerZero Labs'], []], // [ requiredDVN[], [ optionalDVN[], threshold ] ]
-        //     [1, 1], // [srcToDstConfirmations, dstToSrcConfirmations]
-        //     [EVM_BURN_MINT_ENFORCED_OPTIONS, EVM_BURN_MINT_ENFORCED_OPTIONS], // [enforcedOptionsSrcToDst, enforcedOptionsDstToSrc]
-        // ],
+        [
+            sepoliaContract, // srcContract
+            baseSepoliaContract, // dstContract
+            [['LayerZero Labs'], []], // [ requiredDVN[], [ optionalDVN[], threshold ] ]
+            [1, 1], // [srcToDstConfirmations, dstToSrcConfirmations]
+            [EVM_BURN_MINT_ENFORCED_OPTIONS, EVM_LOCK_UNLOCK_ENFORCED_OPTIONS], // [enforcedOptionsSrcToDst, enforcedOptionsDstToSrc]
+        ],
+        [
+            cyberSepoliaContract, // srcContract
+            solanaDevnetContract, // dstContract
+            [['LayerZero Labs'], []], // [ requiredDVN[], [ optionalDVN[], threshold ] ]
+            [1, 1], // [srcToDstConfirmations, dstToSrcConfirmations]
+            [SOLANA_ENFORCED_OPTIONS, EVM_BURN_MINT_ENFORCED_OPTIONS], // [enforcedOptionsSrcToDst, enforcedOptionsDstToSrc]
+        ],
+        [
+            cyberSepoliaContract, // srcContract
+            baseSepoliaContract, // dstContract
+            [['LayerZero Labs'], []], // [ requiredDVN[], [ optionalDVN[], threshold ] ]
+            [1, 1], // [srcToDstConfirmations, dstToSrcConfirmations]
+            [EVM_BURN_MINT_ENFORCED_OPTIONS, EVM_BURN_MINT_ENFORCED_OPTIONS], // [enforcedOptionsSrcToDst, enforcedOptionsDstToSrc]
+        ],
     ])
 
     return {
         contracts: [
             { contract: sepoliaContract },
             { contract: solanaDevnetContract },
-            // { contract: baseSepoliaContract },
-            // { contract: cyberSepoliaContract },
+            { contract: baseSepoliaContract },
+            { contract: cyberSepoliaContract },
         ],
         connections,
     }
