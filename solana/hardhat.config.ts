@@ -64,6 +64,31 @@ const config: HardhatUserConfig = {
             url: process.env.RPC_URL_SEPOLIA,
             accounts,
         },
+        'base-sepolia': {
+            eid: EndpointId.BASESEP_V2_TESTNET,
+            url: process.env.RPC_URL_BASE_SEPOLIA,
+            accounts,
+        },
+        'cyber-testnet': {
+            eid: EndpointId.CYBER_V2_TESTNET,
+            url: process.env.RPC_URL_CYBER_TESTNET,
+            accounts,
+        },
+        'cyber-mainnet': {
+            eid: EndpointId.CYBER_V2_MAINNET,
+            url: process.env.RPC_URL_CYBER,
+            accounts,
+        },
+        'base-mainnet': {
+            eid: EndpointId.BASE_V2_MAINNET,
+            url: process.env.RPC_URL_BASE,
+            accounts,
+        },
+        'ethereum-mainnet': {
+            eid: EndpointId.ETHEREUM_V2_MAINNET,
+            url: process.env.RPC_URL_MAINNET,
+            accounts,
+        },
         hardhat: {
             // Need this for testing because TestHelperOz5.sol is exceeding the compiled contract size limit
             allowUnlimitedContractSize: true,

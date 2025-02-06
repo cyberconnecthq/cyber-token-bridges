@@ -28,6 +28,11 @@ export const createSolanaConnectionFactory = () =>
             [EndpointId.SOLANA_V2_MAINNET]: process.env.RPC_URL_SOLANA,
             [EndpointId.SOLANA_V2_TESTNET]: process.env.RPC_URL_SOLANA_TESTNET,
             [EndpointId.SEPOLIA_V2_TESTNET]: process.env.RPC_URL_SEPOLIA,
+            [EndpointId.BASESEP_V2_TESTNET]: process.env.RPC_URL_BASE_SEPOLIA,
+            [EndpointId.CYBER_V2_TESTNET]: process.env.RPC_URL_CYBER_TESTNET,
+            [EndpointId.ETHEREUM_V2_MAINNET]: process.env.RPC_URL_MAINNET,
+            [EndpointId.BASE_V2_MAINNET]: process.env.RPC_URL_BASE,
+            [EndpointId.CYBER_V2_MAINNET]: process.env.RPC_URL_CYBER,
         })
     )
 

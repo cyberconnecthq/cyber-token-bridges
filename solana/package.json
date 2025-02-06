@@ -14,8 +14,8 @@
     "create:oft:mainnet": "hardhat lz:oft:solana:create --eid 30168 --name Cyber --symbol CYBER --only-oft-store true --program-id ${PROGRAM_ID} --uri ${TOKEN_URI}",
     "deploy:devnet": "source .env && solana program deploy --program-id target/deploy/oft-keypair.json target/verifiable/oft.so -u ${RPC_URL_SOLANA_TESTNET}",
     "deploy:mainnet": "source .env && solana program deploy --program-id target/deploy/oft-keypair.json target/verifiable/oft.so -u ${RPC_URL_SOLANA}",
-    "init:oft:devnet": "source .env && hardhat lz:oapp:init:solana --oapp-config layerzero.init.ts --solana-secret-key ${SOLANA_PRIVATE_KEY} --solana-program-id ${PROGRAM_ID}",
-    "init:oft:mainnet": "source .env && hardhat lz:oapp:init:solana --oapp-config layerzero.config.ts --solana-secret-key ${SOLANA_PRIVATE_KEY} --solana-program-id ${PROGRAM_ID}",
+    "init:oft:devnet": "source .env && hardhat lz:oapp:init:solana --oapp-config layerzero.wire.testnet.ts --solana-secret-key ${SOLANA_PRIVATE_KEY} --solana-program-id ${PROGRAM_ID}",
+    "init:oft:mainnet": "source .env && hardhat lz:oapp:init:solana --oapp-config layerzero.wire.mainnet.ts --solana-secret-key ${SOLANA_PRIVATE_KEY} --solana-program-id ${PROGRAM_ID}",
     "lint": "$npm_execpath run lint:js && $npm_execpath run lint:sol",
     "lint:fix": "eslint --fix '**/*.{js,ts,json}' && prettier --write . && solhint 'contracts/**/*.sol' --fix --noPrompt",
     "lint:js": "eslint '**/*.{js,ts,json}' && prettier --check .",
@@ -24,7 +24,8 @@
     "test:anchor": "anchor test",
     "test:forge": "forge test",
     "test:hardhat": "hardhat test",
-    "wire:oft:devnet": "source .env && hardhat lz:oapp:wire --oapp-config layerzero.wire.testnet.ts --solana-secret-key ${SOLANA_PRIVATE_KEY} --solana-program-id ${PROGRAM_ID}"
+    "wire:oft:devnet": "source .env && hardhat lz:oapp:wire --oapp-config layerzero.wire.testnet.ts --solana-secret-key ${SOLANA_PRIVATE_KEY} --solana-program-id ${PROGRAM_ID}",
+    "wire:oft:mainnet": "source .env && hardhat lz:oapp:wire --oapp-config layerzero.wire.mainnet.ts --solana-secret-key ${SOLANA_PRIVATE_KEY} --solana-program-id ${PROGRAM_ID}"
   },
   "resolutions": {
     "ethers": "^5.7.2",

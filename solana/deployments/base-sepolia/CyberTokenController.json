@@ -1,16 +1,12 @@
 {
-  "address": "0x2C251296AFb9385CFf7AbC8Bcd5C6F54b38b9B51",
+  "address": "0xffC20A4176680a2b8d9fd2F9efb5e620f96F4bE2",
   "abi": [
     {
       "type": "constructor",
       "inputs": [
         { "name": "_token", "type": "address", "internalType": "address" },
-        {
-          "name": "_layerZeroEndpoint",
-          "type": "address",
-          "internalType": "address"
-        },
-        { "name": "_owner", "type": "address", "internalType": "address" }
+        { "name": "_lzEndpoint", "type": "address", "internalType": "address" },
+        { "name": "_delegate", "type": "address", "internalType": "address" }
       ],
       "stateMutability": "nonpayable"
     },
@@ -613,6 +609,15 @@
     {
       "type": "function",
       "name": "transferOwnership",
+      "inputs": [
+        { "name": "newOwner", "type": "address", "internalType": "address" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "transferTokenOwnership",
       "inputs": [
         { "name": "newOwner", "type": "address", "internalType": "address" }
       ],
