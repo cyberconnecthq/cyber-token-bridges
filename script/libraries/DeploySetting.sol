@@ -33,6 +33,7 @@ contract DeploySetting {
 
     uint256 internal constant SEPOLIA = 11155111;
     uint256 internal constant OP_SEPOLIA = 11155420;
+    uint256 internal constant BASE_SEPOLIA = 84532;
     uint256 internal constant BNBT = 97;
     uint256 internal constant CYBER_TESTNET = 111557560;
 
@@ -76,6 +77,28 @@ contract DeploySetting {
                 .lzLabsDVN = 0xd680ec569f269aa7015F7979b4f1239b5aa4582C;
             deployParams[OP_SEPOLIA].enforcedGas = 100000;
             deployParams[OP_SEPOLIA].confirmations = 20;
+        }
+
+        {
+            deployParams[BASE_SEPOLIA]
+                .deployerContract = 0x8eD1282a1aCE084De1E99E9Ce5ed68896C49d65f;
+            deployParams[BASE_SEPOLIA]
+                .protocolOwner = 0x7884f7F04F994da14302a16Cf15E597e31eebECf;
+            deployParams[BASE_SEPOLIA]
+                .cyberToken = 0x67a38c9f526966dBc9F3a2f06a67FF258A79A3A6;
+            deployParams[BASE_SEPOLIA]
+                .lzEndpoint = 0x6EDCE65403992e310A62460808c4b910D972f10f;
+            deployParams[BASE_SEPOLIA].eid = 40245;
+            deployParams[BASE_SEPOLIA]
+                .lzController = 0xffC20A4176680a2b8d9fd2F9efb5e620f96F4bE2;
+            deployParams[BASE_SEPOLIA]
+                .lzSendLib = 0xC1868e054425D378095A003EcbA3823a5D0135C9;
+            deployParams[BASE_SEPOLIA]
+                .lzReceiveLib = 0x12523de19dc41c91F7d2093E0CFbB76b17012C8d;
+            deployParams[BASE_SEPOLIA]
+                .lzLabsDVN = 0xe1a12515F9AB2764b887bF60B923Ca494EBbB2d6;
+            deployParams[BASE_SEPOLIA].enforcedGas = 100000;
+            deployParams[BASE_SEPOLIA].confirmations = 20;
         }
 
         {

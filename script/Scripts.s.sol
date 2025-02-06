@@ -405,7 +405,8 @@ contract DeployController is Script, DeploySetting {
             block.chainid == DeploySetting.BNB ||
             block.chainid == DeploySetting.OPTIMISM ||
             block.chainid == DeploySetting.CYBER ||
-            block.chainid == DeploySetting.OP_SEPOLIA
+            block.chainid == DeploySetting.OP_SEPOLIA ||
+            block.chainid == DeploySetting.BASE_SEPOLIA
         ) {
             address adapter = Create2Deployer(
                 deployParams[block.chainid].deployerContract
