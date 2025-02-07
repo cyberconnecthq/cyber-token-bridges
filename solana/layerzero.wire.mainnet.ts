@@ -23,20 +23,11 @@ export const solanaContract: OmniPointHardhat = {
     address: 'Fsy4yRuTRY4daNrF9fPYTGwc7MniBgjavUAhC8S9gAK8', // your OFT Store address
 }
 
-const EVM_BURN_MINT_ENFORCED_OPTIONS: OAppEnforcedOption[] = [
+const EVM_ENFORCED_OPTIONS: OAppEnforcedOption[] = [
     {
         msgType: 1,
         optionType: ExecutorOptionType.LZ_RECEIVE,
-        gas: 100000,
-        value: 0,
-    },
-]
-
-const EVM_LOCK_UNLOCK_ENFORCED_OPTIONS: OAppEnforcedOption[] = [
-    {
-        msgType: 1,
-        optionType: ExecutorOptionType.LZ_RECEIVE,
-        gas: 65000,
+        gas: 150000,
         value: 0,
     },
 ]
@@ -57,28 +48,28 @@ export default async function () {
             solanaContract,
             [['LayerZero Labs', 'Nethermind'], []],
             [15, 32],
-            [SOLANA_ENFORCED_OPTIONS, EVM_LOCK_UNLOCK_ENFORCED_OPTIONS],
+            [SOLANA_ENFORCED_OPTIONS, EVM_ENFORCED_OPTIONS],
         ],
         [
             cyberContract,
             solanaContract,
             [['LayerZero Labs', 'Nethermind'], []],
             [20, 32],
-            [SOLANA_ENFORCED_OPTIONS, EVM_BURN_MINT_ENFORCED_OPTIONS],
+            [SOLANA_ENFORCED_OPTIONS, EVM_ENFORCED_OPTIONS],
         ],
         [
             baseContract,
             ethContract,
             [['LayerZero Labs', 'Nethermind'], []],
             [20, 15],
-            [EVM_LOCK_UNLOCK_ENFORCED_OPTIONS, EVM_BURN_MINT_ENFORCED_OPTIONS],
+            [EVM_ENFORCED_OPTIONS, EVM_ENFORCED_OPTIONS],
         ],
         [
             baseContract,
             cyberContract,
             [['LayerZero Labs', 'Nethermind'], []],
             [20, 20],
-            [EVM_BURN_MINT_ENFORCED_OPTIONS, EVM_BURN_MINT_ENFORCED_OPTIONS],
+            [EVM_ENFORCED_OPTIONS, EVM_ENFORCED_OPTIONS],
         ],
     ])
 

@@ -30,6 +30,7 @@ contract DeploySetting {
     uint256 internal constant OPTIMISM = 10;
     uint256 internal constant BNB = 56;
     uint256 internal constant CYBER = 7560;
+    uint256 internal constant BASE = 8453;
 
     uint256 internal constant SEPOLIA = 11155111;
     uint256 internal constant OP_SEPOLIA = 11155420;
@@ -148,6 +149,38 @@ contract DeploySetting {
             deployParams[CYBER_TESTNET].confirmations = 20;
             deployParams[CYBER_TESTNET]
                 .backendSigner = 0xaB24749c622AF8FC567CA2b4d3EC53019F83dB8F;
+        }
+
+        {
+            deployParams[BASE]
+                .deployerContract = 0x8eD1282a1aCE084De1E99E9Ce5ed68896C49d65f;
+            deployParams[BASE]
+                .protocolOwner = 0x7884f7F04F994da14302a16Cf15E597e31eebECf;
+            deployParams[BASE]
+                .cyberToken = 0xD9e4381b034d402bE34c640FC202bA3e83832739;
+            deployParams[BASE]
+                .lzEndpoint = 0x1a44076050125825900e736c501f859c50fE728c;
+            // deployParams[BASE]
+            // .lzController = 0x9A9D5a29206Dde4F70825032dF32333De5f63921;
+            deployParams[BASE].eid = 30184;
+            deployParams[BASE]
+                .lzSendLib = 0xB5320B0B3a13cC860893E2Bd79FCd7e13484Dda2;
+            deployParams[BASE]
+                .lzReceiveLib = 0xc70AB6f32772f59fBfc23889Caf4Ba3376C84bAf;
+            // deployParams[BASE]
+            //     .lzLabsDVN = 0x6788f52439ACA6BFF597d3eeC2DC9a44B8FEE842;
+            // deployParams[BASE]
+            //     .lzPolyhedraDVN = 0x8ddF05F9A5c488b4973897E278B58895bF87Cb24;
+            deployParams[BASE].confirmations = 20;
+            deployParams[BASE].enforcedGas = 100000;
+            // deployParams[BASE]
+            //     .treasury = 0x0793811Ee06942bAcAb7BD28669D810dE62487B6;
+            // deployParams[BASE]
+            //     .cyberStakingPool = 0x3EfE22FA52F6789DDfc263Cec5BCf435b14b77e2;
+            // deployParams[BASE]
+            //     .cyberVault = 0x522D3A9C2Bc14cE1C4D210ED41ab239FdED02F2b;
+            // deployParams[BASE]
+            //     .backendSigner = 0x2A2EA826102c067ECE82Bc6E2B7cf38D7EbB1B82;
         }
 
         {
