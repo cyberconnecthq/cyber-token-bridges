@@ -157,7 +157,7 @@ contract DeploySetting {
             deployParams[BASE]
                 .protocolOwner = 0x7884f7F04F994da14302a16Cf15E597e31eebECf;
             deployParams[BASE]
-                .cyberToken = 0xD9e4381b034d402bE34c640FC202bA3e83832739;
+                .cyberToken = 0x14778860E937f509e651192a90589dE711Fb88a9;
             deployParams[BASE]
                 .lzEndpoint = 0x1a44076050125825900e736c501f859c50fE728c;
             // deployParams[BASE]

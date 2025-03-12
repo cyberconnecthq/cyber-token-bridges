@@ -422,6 +422,12 @@ contract DeployController is Script, DeploySetting {
                     ),
                     LibDeploy.SALT
                 );
+            console.log("adapter address: ");
+            console.log(adapter);
+            require(
+                adapter == 0x9A9D5a29206Dde4F70825032dF32333De5f63921,
+                "NOT_CORRECT_ADDRESS"
+            );
             LibDeploy._write(vm, "CyberTokenController", adapter);
         } else {
             revert("NOT_SUPPORTED_CHAIN_ID");
