@@ -10,7 +10,7 @@
     "bridge:eth:base": "hardhat --network ethereum-mainnet send-to-evm --dst-eid 30184 --amount 20000000000000000000000000 --to 0x7884f7F04F994da14302a16Cf15E597e31eebECf --contract-name CyberTokenAdapter",
     "bridge:eth:sol": "hardhat --network ethereum-mainnet send --dst-eid 30168 --amount 20000000000000000000000000 --to dJvTxAuByQ4fy6piZpBEjHXVQbDAAFL4HV6YN3nXaGv --contract-name CyberTokenAdapter",
     "bridge:sepolia:sol": "hardhat --network sepolia-testnet send --dst-eid 40168 --amount 1000000000000000000000000 --to dJvTxAuByQ4fy6piZpBEjHXVQbDAAFL4HV6YN3nXaGv --contract-name CyberTokenAdapter",
-    "bridge:sol:cyber": "source .env && hardhat lz:oft:solana:send --amount 10000000000000000 --from-eid 30168 --to 0x7884f7F04F994da14302a16Cf15E597e31eebECf --to-eid 30283 --mint ${MINT_ADDRESS} --program-id ${PROGRAM_ID} --escrow ${ESCROW}",
+    "bridge:sol:cyber": "source .env && hardhat lz:oft:solana:send --amount 20000000000000000 --from-eid 30168 --to 0x7884f7F04F994da14302a16Cf15E597e31eebECf --to-eid 30283 --mint ${MINT_ADDRESS} --program-id ${PROGRAM_ID} --escrow ${ESCROW}",
     "bridge:sol:eth": "source .env && hardhat lz:oft:solana:send --amount 20000000000000000 --from-eid 30168 --to 0x7884f7F04F994da14302a16Cf15E597e31eebECf --to-eid 30101 --mint ${MINT_ADDRESS} --program-id ${PROGRAM_ID} --escrow ${ESCROW}",
     "bridge:sol:sepolia": "source .env && hardhat lz:oft:solana:send --amount 1000000000000000 --from-eid 40168 --to 0x7884f7F04F994da14302a16Cf15E597e31eebECf --to-eid 40161 --mint ${MINT_ADDRESS} --program-id ${PROGRAM_ID} --escrow ${ESCROW}",
     "clean": "rm -rf target artifacts cache out .anchor",
@@ -21,7 +21,7 @@
     "create:oft:devnet": "source .env && hardhat lz:oft:solana:create --eid 40168 --name Cyber --symbol CYBER --only-oft-store true --program-id ${PROGRAM_ID} --uri ${TOKEN_URI}",
     "create:oft:mainnet": "source .env && hardhat lz:oft:solana:create --eid 30168 --name Cyber --symbol CYBER --only-oft-store true --program-id ${PROGRAM_ID} --uri ${TOKEN_URI}",
     "deploy:devnet": "source .env && solana program deploy --program-id target/deploy/oft-keypair.json target/verifiable/oft.so -u ${RPC_URL_SOLANA_TESTNET}",
-    "deploy:mainnet": "source .env && solana program deploy --program-id target/deploy/oft-keypair.json target/verifiable/oft.so -u ${RPC_URL_SOLANA}  --with-compute-unit-price 1100000 --max-sign-attempts 999",
+    "deploy:mainnet": "source .env && solana program deploy --program-id target/deploy/oft-keypair.json target/verifiable/oft.so --use-rpc -u ${RPC_URL_SOLANA} -v  --with-compute-unit-price 500000 --max-sign-attempts 999",
     "init:oft:devnet": "source .env && hardhat lz:oapp:init:solana --oapp-config layerzero.wire.testnet.ts --solana-secret-key ${SOLANA_PRIVATE_KEY} --solana-program-id ${PROGRAM_ID}",
     "init:oft:mainnet": "source .env && hardhat lz:oapp:init:solana --oapp-config layerzero.wire.mainnet.ts --solana-secret-key ${SOLANA_PRIVATE_KEY} --solana-program-id ${PROGRAM_ID}",
     "lint": "$npm_execpath run lint:js && $npm_execpath run lint:sol",
@@ -35,8 +35,8 @@
     "transfer:ownership:oft:mainnet": "source .env && hardhat lz:ownable:transfer-ownership --oapp-config layerzero.wire.mainnet.ts --solana-secret-key ${SOLANA_PRIVATE_KEY} --solana-program-id ${PROGRAM_ID}",
     "transfer:upgrade:oft:mainnet": "source .env && solana program set-upgrade-authority ${PROGRAM_ID} --new-upgrade-authority ADdKwV5wf7Xr6wz4mHm7mGdG6vnNxxwLEP2xFstye2h -u ${RPC_URL_SOLANA} --skip-new-upgrade-authority-signer-check",
     "update:metadata:oft:devnet": "source .env && hardhat lz:oft:solana:update-metadata --eid 40168 --name Cyber --symbol CYBER --mint ${MINT_ADDRESS} --uri ${TOKEN_URI}",
-    "wire:oft:devnet": "source .env && hardhat lz:oapp:wire --oapp-config layerzero.wire.testnet.ts --solana-secret-key ${SOLANA_PRIVATE_KEY} --solana-program-id ${PROGRAM_ID}",
-    "wire:oft:mainnet": "source .env && hardhat lz:oapp:wire --oapp-config layerzero.wire.mainnet.ts --solana-secret-key ${SOLANA_PRIVATE_KEY} --solana-program-id ${PROGRAM_ID}"
+    "wire:oft:devnet": "source .env && pnpm hardhat lz:oapp:wire --oapp-config layerzero.wire.testnet.ts --solana-secret-key ${SOLANA_PRIVATE_KEY} --solana-program-id ${PROGRAM_ID}",
+    "wire:oft:mainnet": "source .env && pnpm hardhat lz:oapp:wire --oapp-config layerzero.wire.mainnet.ts --solana-secret-key ${SOLANA_PRIVATE_KEY} --solana-program-id ${PROGRAM_ID}"
   },
   "resolutions": {
     "ethers": "^5.7.2",
