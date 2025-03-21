@@ -405,7 +405,9 @@ contract DeployController is Script, DeploySetting {
             block.chainid == DeploySetting.BNB ||
             block.chainid == DeploySetting.OPTIMISM ||
             block.chainid == DeploySetting.CYBER ||
-            block.chainid == DeploySetting.OP_SEPOLIA
+            block.chainid == DeploySetting.OP_SEPOLIA ||
+            block.chainid == DeploySetting.BASE_SEPOLIA ||
+            block.chainid == DeploySetting.BASE
         ) {
             address adapter = Create2Deployer(
                 deployParams[block.chainid].deployerContract
@@ -420,6 +422,12 @@ contract DeployController is Script, DeploySetting {
                     ),
                     LibDeploy.SALT
                 );
+            console.log("adapter address: ");
+            console.log(adapter);
+            require(
+                adapter == 0x9A9D5a29206Dde4F70825032dF32333De5f63921,
+                "NOT_CORRECT_ADDRESS"
+            );
             LibDeploy._write(vm, "CyberTokenController", adapter);
         } else {
             revert("NOT_SUPPORTED_CHAIN_ID");

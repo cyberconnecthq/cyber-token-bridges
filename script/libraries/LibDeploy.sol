@@ -18,7 +18,6 @@ library LibDeploy {
         if (chainId == 1) chainName = "eth";
         else if (chainId == 80001) chainName = "mumbai";
         else if (chainId == 137) chainName = "polygon";
-        else if (chainId == 420) chainName = "op_goerli";
         else if (chainId == 84531) chainName = "base_goerli";
         else if (chainId == 59140) chainName = "linea_goerli";
         else if (chainId == 534351) chainName = "scroll_sepolia";
