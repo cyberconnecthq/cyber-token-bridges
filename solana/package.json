@@ -33,7 +33,7 @@
     "test:forge": "forge test",
     "test:hardhat": "hardhat test",
     "transfer:ownership:oft:mainnet": "source .env && hardhat lz:ownable:transfer-ownership --oapp-config layerzero.wire.mainnet.ts --solana-secret-key ${SOLANA_PRIVATE_KEY} --solana-program-id ${PROGRAM_ID}",
-    "transfer:upgrade:oft:mainnet": "source .env && solana program set-upgrade-authority ${PROGRAM_ID} --new-upgrade-authority ADdKwV5wf7Xr6wz4mHm7mGdG6vnNxxwLEP2xFstye2h -u ${RPC_URL_SOLANA} --skip-new-upgrade-authority-signer-check",
+    "transfer:upgrade:oft:mainnet": "source .env && solana program set-upgrade-authority ${PROGRAM_ID} --new-upgrade-authority EDU41dLCkVM2Bxneg6ZLWu2t8jcz9JW9kS6exiN2qfxf -u ${RPC_URL_SOLANA} --skip-new-upgrade-authority-signer-check",
     "update:metadata:oft:devnet": "source .env && hardhat lz:oft:solana:update-metadata --eid 40168 --name Cyber --symbol CYBER --mint ${MINT_ADDRESS} --uri ${TOKEN_URI}",
     "wire:oft:devnet": "source .env && pnpm hardhat lz:oapp:wire --oapp-config layerzero.wire.testnet.ts --solana-secret-key ${SOLANA_PRIVATE_KEY} --solana-program-id ${PROGRAM_ID}",
     "wire:oft:mainnet": "source .env && pnpm hardhat lz:oapp:wire --oapp-config layerzero.wire.mainnet.ts --solana-secret-key ${SOLANA_PRIVATE_KEY} --solana-program-id ${PROGRAM_ID}"

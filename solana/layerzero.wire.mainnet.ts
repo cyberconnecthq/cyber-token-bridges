@@ -78,7 +78,12 @@ export default async function () {
             { contract: ethContract },
             { contract: baseContract },
             { contract: cyberContract },
-            { contract: solanaContract },
+            {
+                contract: solanaContract,
+                config: {
+                    owner: 'EDU41dLCkVM2Bxneg6ZLWu2t8jcz9JW9kS6exiN2qfxf',
+                },
+            },
         ],
         connections,
     }
