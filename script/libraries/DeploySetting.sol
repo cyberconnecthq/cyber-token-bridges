@@ -180,7 +180,7 @@ contract DeploySetting {
             // deployParams[BASE]
             //     .cyberVault = 0x522D3A9C2Bc14cE1C4D210ED41ab239FdED02F2b;
             // deployParams[BASE]
-            //     .backendSigner = 0x2A2EA826102c067ECE82Bc6E2B7cf38D7EbB1B82;
+            //     .backendSigner = 0xB6f53FCF8a8F9e2b9D7C5fCf1D6D052496e8A098;
         }
 
         {
@@ -212,7 +212,7 @@ contract DeploySetting {
             deployParams[CYBER]
                 .cyberVault = 0x522D3A9C2Bc14cE1C4D210ED41ab239FdED02F2b;
             deployParams[CYBER]
-                .backendSigner = 0x2A2EA826102c067ECE82Bc6E2B7cf38D7EbB1B82;
+                .backendSigner = 0xB6f53FCF8a8F9e2b9D7C5fCf1D6D052496e8A098;
         }
 
         {
@@ -239,6 +239,8 @@ contract DeploySetting {
             deployParams[ETH].enforcedGas = 65000;
             deployParams[ETH]
                 .treasury = 0x455DB34c99A866489F3ac63fa2F068c726BC286b;
+            deployParams[ETH]
+                .backendSigner = 0xB6f53FCF8a8F9e2b9D7C5fCf1D6D052496e8A098;
         }
 
         {

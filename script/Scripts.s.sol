@@ -741,7 +741,8 @@ contract DeployCyberTokenDistributor is Script, DeploySetting {
 
         if (
             block.chainid == DeploySetting.CYBER_TESTNET ||
-            block.chainid == DeploySetting.CYBER
+            block.chainid == DeploySetting.CYBER ||
+            block.chainid == DeploySetting.ETH
         ) {
             address cyberTokenDistributorImpl = Create2Deployer(
                 deployParams[block.chainid].deployerContract
