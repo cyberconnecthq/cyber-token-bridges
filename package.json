@@ -75,6 +75,13 @@
     "bridge_test:op_sepolia": "source .env.op_sepolia.owner && forge script script/Scripts.s.sol:TestBridge --rpc-url $RPC_URL --private-key $PRIVATE_KEY -vvv --broadcast",
     "test_bridge_stake:bnbt": "source .env.bnbt && forge script script/Scripts.s.sol:TestBridgeAndStake --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast --slow -vvv"
   },
+  "resolutions": {
+    "elliptic": "6.6.1",
+    "pbkdf2": "3.1.5",
+    "form-data": "2.5.5",
+    "cipher-base": "1.0.7",
+    "sha.js": "2.4.12"
+  },
   "dependencies": {
     "@layerzerolabs/lz-evm-oapp-v2": "^2.3.5",
     "@layerzerolabs/lz-evm-protocol-v2": "^2.3.3",
