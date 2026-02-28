@@ -43,7 +43,7 @@
     "hardhat-deploy": "^0.12.1",
     "elliptic": "6.6.1",
     "pbkdf2": "3.1.5",
-    "form-data": "2.5.5",
+    "form-data": "4.0.4",
     "cipher-base": "1.0.7",
     "sha.js": "2.4.12",
     "ws": "7.5.10",
@@ -70,7 +70,10 @@
     "valibot": "1.2.0",
     "diff": "5.2.2",
     "tmp": "0.2.5",
-    "undici": "6.23.0"
+    "undici": "6.23.0",
+    "@openzeppelin/contracts": "5.4.0",
+    "@openzeppelin/contracts-upgradeable": "5.4.0",
+    "serialize-javascript": "7.0.3"
   },
   "devDependencies": {
     "@coral-xyz/anchor": "^0.29.0",
@@ -200,7 +203,10 @@
       "undici@>=6": "6.23.0",
       "undici@<6": "5.29.0",
       "@openzeppelin/contracts@<5": "4.9.6",
-      "@openzeppelin/contracts-upgradeable@<5": "4.9.6"
+      "@openzeppelin/contracts-upgradeable@<5": "4.9.6",
+      "@openzeppelin/contracts@>=5": "5.4.0",
+      "@openzeppelin/contracts-upgradeable@>=5": "5.4.0",
+      "serialize-javascript": "7.0.3"
     }
   },
   "overrides": {

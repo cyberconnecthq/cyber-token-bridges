@@ -105,7 +105,9 @@
     "valibot": "1.2.0",
     "diff": "5.2.2",
     "tmp": "0.2.5",
-    "undici": "6.23.0"
+    "undici": "6.23.0",
+    "@openzeppelin/contracts": "5.4.0",
+    "@openzeppelin/contracts-upgradeable": "5.4.0"
   },
   "pnpm": {
     "overrides": {
@@ -153,7 +155,9 @@
       "undici@>=6": "6.23.0",
       "undici@<6": "5.29.0",
       "@openzeppelin/contracts@<5": "4.9.6",
-      "@openzeppelin/contracts-upgradeable@<5": "4.9.6"
+      "@openzeppelin/contracts-upgradeable@<5": "4.9.6",
+      "@openzeppelin/contracts@>=5": "5.4.0",
+      "@openzeppelin/contracts-upgradeable@>=5": "5.4.0"
     }
   },
   "dependencies": {
