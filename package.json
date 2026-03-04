@@ -107,6 +107,7 @@
     "diff": "5.2.2",
     "tmp": "0.2.5",
     "undici": "6.23.0",
+    "got": "11.8.6",
     "@openzeppelin/contracts": "5.4.0",
     "@openzeppelin/contracts-upgradeable": "5.4.0",
     "bigint-buffer": "npm:@trufflesuite/bigint-buffer@^1.1.9"
@@ -157,6 +158,7 @@
       "tmp": "0.2.5",
       "undici@>=6": "6.23.0",
       "undici@<6": "5.29.0",
+      "got@<12": "11.8.6",
       "@openzeppelin/contracts@<5": "4.9.6",
       "@openzeppelin/contracts-upgradeable@<5": "4.9.6",
       "@openzeppelin/contracts@>=5": "5.4.0",
@@ -180,7 +182,6 @@
     "prettier-plugin-solidity": "^1.0.0-beta.19",
     "solhint": "^3.3.7",
     "solhint-plugin-prettier": "^0.0.5",
-    "solidity-coverage": "^0.7.21",
     "ts-node": "^10.8.2",
     "typechain": "^8.1.0",
     "typescript": "^4.7.4"
