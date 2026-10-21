@@ -1,0 +1,24 @@
+==> build ok: bytecode matches Base, controller lands at 0x3cBfDaDA8abCb43A42eAEd1B88e72B06eb2523da
+==> Robinhood: 0x0e0bE581B17684f849AF6964D731FCe0F7d366BD (nonce 0) deploys Create2Deployer -> 0x8eD1282a1aCE084De1E99E9Ce5ed68896C49d65f
+    tx 0x7dec599f8bf8784827ca0af52d357e1b4c6009c10274b67987b28bdbe5927c9b (block 94135492)
+==> Robinhood: 0xE906b91103D216420F7AE13b29fde73ce9c206cD burns nonce 0 with a 0-value self-transfer
+    tx 0x614c7323987acdee6cff52161d55bb34337ec4c185c1286f0e6c8a65068ca036 (block 94135532)
+==> Robinhood: 0xE906b91103D216420F7AE13b29fde73ce9c206cD (nonce 1) deploys CyberToken -> 0x14778860E937f509e651192a90589dE711Fb88a9 (mints nothing)
+    tx 0xc1c052b9797195c6cbfecc11555f62ceb0e85e5f62b80fe2eccaa3bf99a64c4d (block 94135615)
+==> Robinhood: 0x0e0bE581B17684f849AF6964D731FCe0F7d366BD deploys CyberTokenController via 0x8eD1282a1aCE084De1E99E9Ce5ed68896C49d65f -> 0x3cBfDaDA8abCb43A42eAEd1B88e72B06eb2523da
+    tx 0xcb5d344d17a65a33b31e8d53654e5693a03007bdc8a6f0ae4c2bd5f47b206c11 (block 94135752)
+==> Robinhood: 0xE906b91103D216420F7AE13b29fde73ce9c206cD (nonce 2) hands token ownership to the controller 0x3cBfDaDA8abCb43A42eAEd1B88e72B06eb2523da
+    tx 0xe1e6b0d233f3c7b5ff97bcd47921becd10f76ae493bb97e4d81d29f7dad035e3 (block 94135869)
+==> eid 30101: pin send library 0xC39161c743D0307EB9BCc9FEF03eeb9Dc4802de7 on 0x3cBfDaDA8abCb43A42eAEd1B88e72B06eb2523da
+    tx 0x1415f3ee6c210de8447fa6ac8a025fc613b748d4f827c8cd275e99cec24399b1 (block 94136009)
+==> eid 30101: pin receive library 0xe1844c5D63a9543023008D332Bd3d2e6f1FE1043 on 0x3cBfDaDA8abCb43A42eAEd1B88e72B06eb2523da
+    tx 0xc4fea697ff67c461bfe1efa0c319f5ef7b0eb76d25f363f2f765051f1296ed11 (block 94136065)
+==> eid 30101: ULN on 0xC39161c743D0307EB9BCc9FEF03eeb9Dc4802de7 = 20 confirmations, DVNs [0x0ffe02df012299a370d5dd69298a5826eacafdf8,0xd01ae6905d48315f7be10c7330aecf8360ef5b12]
+    tx 0xcbfa75c045ed8cc8b153819fda97c48af43d9cd431821403235597550e3169b8 (block 94136126)
+==> eid 30101: ULN on 0xe1844c5D63a9543023008D332Bd3d2e6f1FE1043 = 15 confirmations, DVNs [0x0ffe02df012299a370d5dd69298a5826eacafdf8,0xd01ae6905d48315f7be10c7330aecf8360ef5b12]
+    tx 0xee8364341b10b67ca9d23feeaace4fd668270d91751b39a9e68a82b3c06b3021 (block 94136206)
+==> Robinhood: controller.setPeer(30101, ETH adapter)
+    tx 0x70edc5740fda183cbdb692a7565efd93bbe8ebe5374c106ce06380d43d79b2c1 (block 94136296)
+==> Robinhood: controller.setEnforcedOptions(30101, lzReceive 150000)
+    tx 0x1fef55a2bd43b96a3adf88323ca3146857833d08d9fc36615a57817de5d3992d (block 94136349)
+==> Robinhood side done

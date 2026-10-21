@@ -87,6 +87,7 @@ send() {
         r=$(cast send --unlocked --from "$from" --rpc-url "$rpc" "$@" --json)
     fi
     [ "$(jq -r .status <<<"$r")" = 0x1 ] || die "tx reverted: $*"
+    [ "$MODE" = live ] && echo "    tx $(jq -r .transactionHash <<<"$r") (block $((16#$(jq -r .blockNumber <<<"$r" | sed 's/^0x//'))))" >&2
     [ -n "$GASLOG" ] && echo "$rpc $from $(jq -r .transactionHash <<<"$r")" >>"$GASLOG"
     echo "$r"
 }
@@ -338,7 +339,8 @@ start_fork() {
     die "fork on :$2 did not start"
 }
 
-as() { cast rpc anvil_impersonateAccount "$2" --rpc-url "$1" >/dev/null && cast rpc anvil_setBalance "$2" 0x56BC75E2D63100000 --rpc-url "$1" >/dev/null; }
+imp() { cast rpc anvil_impersonateAccount "$2" --rpc-url "$1" >/dev/null; }
+as() { imp "$1" "$2" && cast rpc anvil_setBalance "$2" 0x56BC75E2D63100000 --rpc-url "$1" >/dev/null; }
 
 reverts() { if cast call "$@" >/dev/null 2>&1; then die "expected revert: $*"; fi; }
 
@@ -422,8 +424,10 @@ simulate() {
     RH=http://127.0.0.1:18547
     ETH=http://127.0.0.1:18548
     GASLOG=$(mktemp)
-    for a in $DEPLOYER $TOKEN_DEPLOYER $DELEGATE; do as $RH $a; done
-    for a in $DELEGATE $ETH_SAFE $TOKEN_DEPLOYER; do as $ETH $a; done
+    # The deploy keys keep their real balances, so the run also proves the funding is enough.
+    for a in $DEPLOYER $TOKEN_DEPLOYER $DELEGATE; do imp $RH $a; done
+    for a in $DELEGATE $TOKEN_DEPLOYER; do imp $ETH $a; done
+    as $ETH $ETH_SAFE
 
     log "[sim] deploy + wire Robinhood"
     deploy_robinhood
