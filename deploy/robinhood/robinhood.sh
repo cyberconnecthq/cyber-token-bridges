@@ -31,9 +31,9 @@ RH_DVNS=(0x0ffe02df012299a370d5dd69298a5826eacafdf8 0xd01ae6905d48315f7be10c7330
 ETH_DVNS=(0x589dEDbD617e0CBcB916A9223F4d1300c294236b 0xa59BA433ac34D2927232918Ef5B2eaAfcF130BA5)
 ETH_CONF=15
 RH_CONF=20
-# Executor lzReceive gas. Into Robinhood a mint costs 159,482 when the recipient has delegated votes, so Base's
-# 150k is not enough there; into Ethereum an unlock costs 81,182.
-GAS_TO_RH=200000
+# Executor lzReceive gas, as forwarded to EndpointV2.lzReceive. Worst case into Robinhood (first message on the
+# path, recipient with delegated votes) needs 191,694, so Base's 150k is not enough; into Ethereum it needs 128,190.
+GAS_TO_RH=250000
 GAS_TO_ETH=150000
 SALT=$(cast keccak Cyber)
 # keccak256 of Base's deployed creation code; a mismatch means the sources or the compiler changed.
