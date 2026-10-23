@@ -1,0 +1,40 @@
+{
+ "language": "Solidity",
+ "settings": {
+  "evmVersion": "london",
+  "libraries": {},
+  "metadata": {
+   "bytecodeHash": "ipfs",
+   "useLiteralContent": false
+  },
+  "optimizer": {
+   "enabled": true,
+   "runs": 200
+  },
+  "outputSelection": {
+   "*": {
+    "*": [
+     "evm.bytecode",
+     "evm.deployedBytecode",
+     "devdoc",
+     "userdoc",
+     "metadata",
+     "abi"
+    ]
+   }
+  },
+  "remappings": [
+   "ds-test/=lib/forge-std/lib/ds-test/src/",
+   "forge-std/=lib/forge-std/src/",
+   "openzeppelin-contracts/=lib/openzeppelin-contracts/",
+   "solidity-examples/=lib/solidity-examples/contracts/",
+   "solmate/=lib/solmate/src/"
+  ],
+  "viaIR": false
+ },
+ "sources": {
+  "src/deployer/Create2Deployer.sol": {
+   "content": "// SPDX-License-Identifier: GPL-3.0-or-later\npragma solidity 0.8.14;\n\ncontract Create2Deployer {\n    event Deployed(address addr, bytes32 salt);\n\n    function deploy(bytes memory code, bytes32 salt) public returns (address) {\n        address addr;\n        require(code.length != 0, \"Create2: bytecode length is zero\");\n        assembly {\n            addr := create2(0, add(code, 0x20), mload(code), salt)\n            if iszero(extcodesize(addr)) {\n                revert(0, 0)\n            }\n        }\n\n        emit Deployed(addr, salt);\n        return addr;\n    }\n}\n"
+  }
+ }
+}

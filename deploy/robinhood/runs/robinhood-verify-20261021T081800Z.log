@@ -1,0 +1,6 @@
+==> etherscan Create2Deployer: Pass - Verified
+==> sourcify Create2Deployer: exact_match (job 3940079a-4e33-4c69-9f5a-e822af4aab58)
+==> etherscan CyberToken: Pass - Verified
+==> sourcify CyberToken: exact_match (job 614c77ae-3523-48c7-93bf-f75a90f0f2ad)
+==> etherscan CyberTokenController: Pass - Verified
+==> sourcify CyberTokenController: exact_match (job 9270a981-825e-420e-811a-ac4be9d44c70)
