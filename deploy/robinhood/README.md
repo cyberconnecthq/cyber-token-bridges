@@ -23,11 +23,17 @@ identical to the unverified `0x8eD1…` code on the other chains, so it can be v
 ./robinhood.sh simulate     # full rehearsal on local forks; prints the gas each key needs
 DEPLOYER_PK=… TOKEN_DEPLOYER_PK=… DELEGATE_PK=… ./robinhood.sh deploy   # Robinhood side
 DELEGATE_PK=… ./robinhood.sh wire-eth      # Ethereum: the delegate pins libraries + ULN for eid 30416
-./robinhood.sh safe-batch   # calldata for the ETH treasury Safe (setPeer + setEnforcedOptions); executing it opens the pathway
-./robinhood.sh check        # read-only check of both chains
-DELEGATE_PK=… ./robinhood.sh handover <robinhood-safe>
 ETHERSCAN_API_KEY=… HTTPS_PROXY=… ./robinhood.sh verify   # robin.etherscan.io + Sourcify (Blockscout reads Sourcify)
+./robinhood.sh safe-batch   # calldata for the ETH treasury Safe (setPeer + setEnforcedOptions); executing it opens the pathway
+DELEGATE_PK=… ./robinhood.sh handover <robinhood-safe>   # before the Safe batch executes
+./robinhood.sh check        # read-only check of both chains
 ```
+
+Hand the controller to the Robinhood Safe before the ETH Safe batch executes. Once the pathway is open, whoever
+owns the controller can repoint its peer, so that power must not sit with a hot key.
+
+`runs/` records every live transaction, including the first round trip. Its Ethereum → Robinhood leg carried an
+executor native drop, so the test wallet had gas on Robinhood without a separate transfer.
 
 Every step checks on-chain state before it sends, so a re-run skips finished work. Live sends ask for
 confirmation unless `YES=1` is set. `simulate` needs `anvil` and solc 0.8.14 and 0.8.22 in `~/.svm`.

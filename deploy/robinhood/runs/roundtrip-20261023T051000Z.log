@@ -1,0 +1,16 @@
+==> Ethereum: treasury Safe 0x455DB34c99A866489F3ac63fa2F068c726BC286b executed setPeer(30416) + setEnforcedOptions(30416, lzReceive 250000) (safeTxHash 0x8fd2df2e395cd2c7604b84ed46f793df799590b5089dc44cf19d40bdf5a6c396, nonce 11)
+    tx 0xb0d60104b7f4e9caab015c2b38ad6661d0427af6d79e5a84489c9b1af391cfee (block 26252934)
+==> pathway OPEN; controller handed to the Robinhood Safe right after (robinhood-handover-20261023T043500Z.log)
+==> round trip with tester 0x342fB09F47eF65A1B7923Da0a52331Dd1A40b47d, 0.1 CYBER
+==> Base -> Ethereum (funds the test on Ethereum)
+    tx 0xd6a19a1154d0d8c268d5fce5f24b8f25c2181351efc3e6c4d1bce7d9c93edd05 (Base block 52971204)
+    delivered 0xdc1603f97ee055b569bb7dce7b08faaea1e7485780a055cf74d4b454934c9ac9 (block 26253113)
+==> Ethereum -> Robinhood, nonce 1, with an executor native drop of 0.001 ETH to the tester for Robinhood gas
+    tx 0xf2155141e61a2ebce8ee75c295fb79468bf39fa7423d55928dedd897d854e9fb (block 26253118)
+    delivered 0x1a330114a9863b12944a9c9833b39847d3bd01531648d6bcb2a5070f74e4c091 (Robinhood block 95688027)
+    adapter locked 5250768555973000000000000 -> 5250768655973000000000000; Robinhood supply 100000000000000000
+==> Robinhood -> Ethereum, nonce 1
+    tx 0x737b0aaad546071a8f61ff9591c46622e902fa9fc12be822cb679cc91c49c690 (Robinhood block 95688525)
+    delivered 0x6ce4796914ef8b21698fddd1fb04f7b73df0428ce9b28e8c5897ba69387cf8cd (block 26253145)
+    Robinhood supply 0; adapter locked back to 5250768555973000000000000
+==> janus: both messages DELIVERED, SUPPLY_DELTA robinhood 0, CONFIG_DRIFT breach false (janus#46 checks Robinhood)
